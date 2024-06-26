@@ -23,7 +23,7 @@ s3dir_tmp = S3Path(
 path_remote_aws = PosixPath("/home/ubuntu/.pyenv/shims/aws")
 
 
-def sync_lua_scripts(server_id: str, refresh: bool = True):
+def sync_lua_scripts(server_id: str, reload: bool = True):
     """
     :param server_id: ...
     :param refresh: If True, run ``reload eluna`` command after sync.
@@ -32,12 +32,10 @@ def sync_lua_scripts(server_id: str, refresh: bool = True):
     _sync_lua_scripts(
         server_id=server_id,
         dir_local_lua_scripts=dir_local_lua_scripts,
-        dir_remote_lua_scripts=dir_remote_lua_scripts,
         bsm=bsm,
         s3dir_tmp=s3dir_tmp,
-        path_remote_aws=path_remote_aws,
     )
-    if refresh is True:
+    if reload is True:
         print("Reload eluna script: it's OK to see error message")
         run_soap_command(
             bsm=bsm,

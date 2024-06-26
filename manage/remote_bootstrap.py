@@ -13,7 +13,7 @@ server_id = "sbx-black"
 server = Server.get(bsm=bsm, server_id=server_id)
 remoter = Remoter(ssm_client=bsm.ssm_client, server=server)
 
-sync_lua_scripts(server_id=server_id, refresh=True)
+sync_lua_scripts(server_id=server_id, reload=True)
 # remoter.apply_mod_lua_engine_conf()
 # remoter.run_server()
 # remoter.list_session()
