@@ -46,7 +46,7 @@ local CpiMultiVendor = {}
 --[[
 VENDOR_DATA_LIST
 
-把你希望给玩家看到的传送菜单的数据按照层级结构放在这个列表中. 这里的每条记录叫做一个 vendorData.
+把你希望给玩家看到的商店菜单的数据按照层级结构放在这个列表中. 这里的每条记录叫做一个 vendorData.
 一条 vendorData 对应着传送菜单上的一个按钮, 也对应着一个传送坐标.
 --]]
 CpiMultiVendor.VENDOR_DATA_LIST = {
@@ -737,7 +737,7 @@ function CpiMultiVendor.BuildMenu(sender, player, parentVendorDataId)
 
     See: https://www.azerothcore.org/pages/eluna/Player/GossipSendMenu.html
     --]]
-    player:GossipSendMenu(NPC_TEXT_ID_1, sender)
+    player:GossipSendMenu(NPC_TEXT_ID_1, sender) -- menu sender is a creature, so we don't need menu_id
 end
 
 
@@ -825,7 +825,7 @@ function CpiMultiVendor.OnGossip(event, player, creature, sender, intid, code, m
         end
 
         --[[
-        如果 vendorData 中既没有 mapid 字段, 那么有两种情况:
+        如果 vendorData 中既没有 vendor_id 字段, 那么有两种情况:
 
         1. 这是一个 submenu 的 gossip item: 此时这个 intid 就是 submenu 的 ID.
             我们将其穿给 CpiMultiVendor.BuildMenu 既可进入到下一级菜单.
