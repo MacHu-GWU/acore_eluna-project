@@ -1,5 +1,12 @@
 About ``workspace`` Folder
 ==============================================================================
+这个目录是 lua 脚本的开发目录.
+
+- dev: 临时的开发脚本都在这个目录下进行. 这个目录下的文件不会进入到 Git.
+- stage: 开发完成, 需要进入到 Git 但不在服务器上启用的脚本放在这里.
+- lua_scripts: 在服务器上启用的脚本放在这里.
+
+
 - `Azerothcore Eluna GitHub <https://github.com/azerothcore/mod-eluna>`_: Eluna 项目 GitHub 官网.
 - `AzerothCore Eluna API Document <https://www.azerothcore.org/pages/eluna/>`_: Eluna 项目官方 API 文档.
 - `Hooks Reference <https://github.com/ElunaLuaEngine/Eluna/blob/master/hooks/Hooks.h>`_: 所有触发器事件的列表.
