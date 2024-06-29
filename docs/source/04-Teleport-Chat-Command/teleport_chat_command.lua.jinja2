@@ -361,7 +361,8 @@ function TeleportChatCommand.OnGossip(
         -- 获得了被选中的 menuData, 就进入到后续的处理逻辑
         -- 如果 menuData 中有 map 字段, 那么就需要传送玩家
         if menuData.map then
-            player:Teleport(menuData.map, menuData.x, menuData.y, menuData.z)
+            -- See https://www.azerothcore.org/pages/eluna/Player/Teleport.html
+            player:Teleport(menuData.map, menuData.x, menuData.y, menuData.z, 0)
             player:GossipComplete()
             print("Exit: TeleportChatCommand.OnGossip(...)")
             return
