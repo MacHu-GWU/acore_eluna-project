@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-这个脚本能生成最终的 cpi_multivendor.lua 文件.
+这个脚本能生成最终的 teleport_chat_command.lua 文件.
 """
 
 from pathlib import Path

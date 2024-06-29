@@ -101,4 +101,4 @@ for sheet_name, group_name in [
     df_list.append(process_zone(sheet_name=sheet_name, group_name=group_name))
 
 df = pl.concat(df_list)
-df.write_csv("teleport_char_command.tsv", separator="\t")
+df.write_csv("teleport_chat_command.tsv", separator="\t")
