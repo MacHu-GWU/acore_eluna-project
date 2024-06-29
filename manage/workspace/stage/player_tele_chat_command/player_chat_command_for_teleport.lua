@@ -1,5 +1,6 @@
 --[[
-这个脚本用于让玩家通过输入 #tele 命令来打开传送菜单.
+这个脚本是一个基于 ``player_tele_chat_command_event_callback_poc.lua`` 的进阶版本,
+它能让玩家通过输入 #tele 命令来打开传送菜单, 然后点击选项传送.
 --]]
 
 --[[
@@ -25,7 +26,6 @@ local GOSSIP_EVENT_ON_SELECT = 2 -- Fired when a player selects a gossip menu op
 下面是所有 ICON 代码的枚举. 你可以在 "OptionIcon" 一节中看到所有图标的说明.
 See: https://www.azerothcore.org/wiki/gossip_menu_option
 --]]
--- See
 local GOSSIP_ICON_CHAT = 0 -- White chat bubble
 local GOSSIP_ICON_VENDOR = 1 -- Brown bag
 local GOSSIP_ICON_TAXI = 2 -- Flight
@@ -50,9 +50,9 @@ local ROOT_MENU_DATA_PARENT_ID = 0 -- 如果一个菜单没有 parent, 那么它
 --[[
 这是我们所有跟 teleport 相关的逻辑的 namespace table. 它类似于面向对象中的类一样, 有属性也有方法.
 
-例如后面的 PlayerChatCommandTeleport.OnGossip() 就是一个方法.
+例如后面的 TeleportPlayerChatCommand.OnGossip() 就是一个方法.
 --]]
-local PlayerChatCommandTeleport = {}
+local TeleportPlayerChatCommand = {}
 
 --[[
 MENU_DATA_LIST
@@ -60,7 +60,7 @@ MENU_DATA_LIST
 把你希望给玩家看到的传送菜单的数据按照层级结构放在这个列表中. 这里的每条记录叫做一个 menuData.
 一条 menuData 对应着传送菜单上的一个按钮, 也对应着一个传送坐标.
 --]]
-PlayerChatCommandTeleport.MENU_DATA_LIST = {
+TeleportPlayerChatCommand.MENU_DATA_LIST = {
     {name = "达拉然 飞行管理员", mapid = 571, x = 5813.0, y = 448.0, z = 658.8, o = 0},
     {name = "达拉然 公共旅馆", mapid = 571, x = 5848.9, y = 636.3, z = 647.5, o = 0},
     {name = "子菜单 1",
@@ -85,18 +85,18 @@ menuData 的唯一 ID, value 是 menuData 本身.
     ...
 }
 --]]
-PlayerChatCommandTeleport.MENU_DATA_MAPPER = {}
+TeleportPlayerChatCommand.MENU_DATA_MAPPER = {}
 
 --[[
-这个变量是给所有 PlayerChatCommandTeleport.MENU_DATA_LIST 中定义的 menuData 分配一个
-唯一的 ID, 以便精确定位. 这个变量会在 PlayerChatCommandTeleport.Analyse 函数中被用到,
+这个变量是给所有 TeleportPlayerChatCommand.MENU_DATA_LIST 中定义的 menuData 分配一个
+唯一的 ID, 以便精确定位. 这个变量会在 TeleportPlayerChatCommand.Analyse 函数中被用到,
 每次处理完一个 menuData 就会 + 1.
 --]]
 local idCount = 1
-function PlayerChatCommandTeleport.Preprocess(menuDataList, parentMenuDataId)
+function TeleportPlayerChatCommand.Preprocess(menuDataList, parentMenuDataId)
     --[[
-    这个函数是对 PlayerChatCommandTeleport.MENU_DATA_LIST 表中的数据进行解析, 给
-    PlayerChatCommandTeleport.MENU_DATA_MAPPER 表填充数据. 这个函数用到了递归.
+    这个函数是对 TeleportPlayerChatCommand.MENU_DATA_LIST 表中的数据进行解析, 给
+    TeleportPlayerChatCommand.MENU_DATA_MAPPER 表填充数据. 这个函数用到了递归.
 
     :param menuDataList: 这是一个列表, 里面的元素是类似于
         {name = "达拉然 飞行管理员", mapid = 571, x = 5813.0, y = 448.0, z = 658.8, o = 0}
@@ -105,7 +105,7 @@ function PlayerChatCommandTeleport.Preprocess(menuDataList, parentMenuDataId)
     --]]
     -- 类似于 Python 中的 enumerate 函数, 返回一个索引和值的元组
     for ind, menuData in ipairs(menuDataList) do
-        -- 由 PlayerChatCommandTeleport.Analyse 给 menuData 添加的属性全大写,
+        -- 由 TeleportPlayerChatCommand.Analyse 给 menuData 添加的属性全大写,
         -- 用于和 menuData 中原来就有的属性区分开来.
         -- 给这个 menuData 分配一个唯一的 ID
         menuData.ID = idCount
@@ -114,25 +114,25 @@ function PlayerChatCommandTeleport.Preprocess(menuDataList, parentMenuDataId)
         -- 如果 icon 没指定, 就默认用 Taxi (一个小翅膀那个)
         menuData.ICON = menuData.icon or GOSSIP_ICON_TAXI
         idCount = idCount + 1
-        -- 将这个 menuData 添加到 PlayerChatCommandTeleport.MENU_DATA_MAPPER 表中
-        PlayerChatCommandTeleport.MENU_DATA_MAPPER[menuData.ID] = menuData
+        -- 将这个 menuData 添加到 TeleportPlayerChatCommand.MENU_DATA_MAPPER 表中
+        TeleportPlayerChatCommand.MENU_DATA_MAPPER[menuData.ID] = menuData
         print(string.format("menuData.ID = %s, menuData.PARENT_ID = %s, menuData.name = %s", menuData.ID, menuData.PARENT_ID, menuData.name))
 
         if not menuData.mapid then
             -- 如果连 map id 都没有, 那么就是一个菜单, 所以把 ICON 设为 Trainer (一本书那个)
-            PlayerChatCommandTeleport.MENU_DATA_MAPPER[menuData.ID].ICON = menuData.icon or GOSSIP_ICON_TRAINER
-            -- 因为我们知道这是一个菜单, 所以递归调用 PlayerChatCommandTeleport.Analyse 函数
+            TeleportPlayerChatCommand.MENU_DATA_MAPPER[menuData.ID].ICON = menuData.icon or GOSSIP_ICON_TRAINER
+            -- 因为我们知道这是一个菜单, 所以递归调用 TeleportPlayerChatCommand.Analyse 函数
             -- 遍历这个菜单下面的所有 menuData, 并且将它们的 parentMenuDataId 都设为当前 menuData 的 ID
-            PlayerChatCommandTeleport.Preprocess(menuData, menuData.ID)
+            TeleportPlayerChatCommand.Preprocess(menuData, menuData.ID)
         end
     end
 end
 
-print("Start: convert PlayerChatCommandTeleport.MENU_DATA_LIST to PlayerChatCommandTeleport.MENU_DATA_MAPPER ...")
-PlayerChatCommandTeleport.Preprocess(PlayerChatCommandTeleport.MENU_DATA_LIST, 0)
-print("End: convert PlayerChatCommandTeleport.MENU_DATA_LIST to PlayerChatCommandTeleport.MENU_DATA_MAPPER ...")
+print("Start: convert TeleportPlayerChatCommand.MENU_DATA_LIST to TeleportPlayerChatCommand.MENU_DATA_MAPPER ...")
+TeleportPlayerChatCommand.Preprocess(TeleportPlayerChatCommand.MENU_DATA_LIST, 0)
+print("End: convert TeleportPlayerChatCommand.MENU_DATA_LIST to TeleportPlayerChatCommand.MENU_DATA_MAPPER ...")
 
-function PlayerChatCommandTeleport.FindIdByKeyValue(menuDataMapper, menuDataKey, menuDataValue)
+function TeleportPlayerChatCommand.FindIdByKeyValue(menuDataMapper, menuDataKey, menuDataValue)
     --[[
     这个函数的目的是查找第一个 key, value pair 符合条件的 menuData 的 ID.
 
@@ -160,7 +160,7 @@ function PlayerChatCommandTeleport.FindIdByKeyValue(menuDataMapper, menuDataKey,
     end
 end
 
-function PlayerChatCommandTeleport.FindAllByKeyValue(menuDataMapper, menuDataKey, menuDataValue)
+function TeleportPlayerChatCommand.FindAllByKeyValue(menuDataMapper, menuDataKey, menuDataValue)
     --[[
     这个函数的目的是查找所有 key, value pair 符合条件的 menuData 的列表.
 
@@ -190,7 +190,7 @@ function PlayerChatCommandTeleport.FindAllByKeyValue(menuDataMapper, menuDataKey
     return menuDataList
 end
 
-function PlayerChatCommandTeleport.BuildMenu(sender, player, parentMenuDataId)
+function TeleportPlayerChatCommand.BuildMenu(sender, player, parentMenuDataId)
     --[[
     这个函数会是我们用来构建菜单的自定义函数.
     --]]
@@ -199,10 +199,10 @@ function PlayerChatCommandTeleport.BuildMenu(sender, player, parentMenuDataId)
     1. 先根据当前给定的 parentMenuDataId 找到所有的子菜单. 如果 parentMenuDataId 是 0,
     那么就是最顶层的菜单.
     --]]
-    local arg_menuDataMapper = PlayerChatCommandTeleport.MENU_DATA_MAPPER
+    local arg_menuDataMapper = TeleportPlayerChatCommand.MENU_DATA_MAPPER
     local arg_menuDataKey = "PARENT_ID"
     local arg_menuDataValue = parentMenuDataId
-    local menuDataList = PlayerChatCommandTeleport.FindAllByKeyValue(
+    local menuDataList = TeleportPlayerChatCommand.FindAllByKeyValue(
         arg_menuDataMapper,
         arg_menuDataKey,
         arg_menuDataValue
@@ -244,11 +244,11 @@ function PlayerChatCommandTeleport.BuildMenu(sender, player, parentMenuDataId)
     2. 如果 parentMenuDataId 大于 0, 说明我们在一个子菜单中, 那么我们需要添加一个返回上一级菜单的选项.
     --]]
     if parentMenuDataId > 0 then
-        arg_menuDataMapper = PlayerChatCommandTeleport.MENU_DATA_MAPPER
+        arg_menuDataMapper = TeleportPlayerChatCommand.MENU_DATA_MAPPER
         arg_menuDataKey = "ID"
         arg_menuDataValue = parentMenuDataId
         print(string.format("Try to find "))
-        local menuDataId = PlayerChatCommandTeleport.FindIdByKeyValue(
+        local menuDataId = TeleportPlayerChatCommand.FindIdByKeyValue(
             arg_menuDataMapper,
             arg_menuDataKey,
             arg_menuDataValue
@@ -257,7 +257,7 @@ function PlayerChatCommandTeleport.BuildMenu(sender, player, parentMenuDataId)
         local arg_icon = GOSSIP_ICON_TALK
         local arg_msg = "Back to "
         local arg_sender = EMPTY_SENDER
-        local arg_intid = PlayerChatCommandTeleport.MENU_DATA_MAPPER[menuDataId].PARENT_ID
+        local arg_intid = TeleportPlayerChatCommand.MENU_DATA_MAPPER[menuDataId].PARENT_ID
         player:GossipMenuAddItem(arg_icon, arg_msg, arg_sender, arg_intid)
     end
 
@@ -283,7 +283,7 @@ end
 Event Handler Functions
 --------------------------------------------------------------------------------
 --]]
-function PlayerChatCommandTeleport.OnGossip(
+function TeleportPlayerChatCommand.OnGossip(
     event,
     player,
     object,
@@ -297,7 +297,7 @@ function PlayerChatCommandTeleport.OnGossip(
 
     在其他例子中你可能会看到还有一个相关的函数 Global:RegisterPlayerGossipEvent@GOSSIP_EVENT_ON_HELLO event
     用于处理玩家的第一次打开 gossip 菜单的情况. 但是在这个例子中, 打开菜单的动作是通过
-    Player:GossipSendMenu() 方法在 PlayerChatCommandTeleport.OnChat() 中手动用代码
+    Player:GossipSendMenu() 方法在 TeleportPlayerChatCommand.OnChat() 中手动用代码
     运行的, 而不是通过游戏中 Player 与人互动. 所以我们不会需要处理这个 event. 但这里我们还是
     将它的参数列表文档列出来, 供你了解.
 
@@ -338,7 +338,7 @@ function PlayerChatCommandTeleport.OnGossip(
 
     Ref: https://www.azerothcore.org/pages/eluna/Global/RegisterPlayerGossipEvent.html
     --]]
-    print("Enter: PlayerChatCommandTeleport.OnGossip(...)")
+    print("Enter: TeleportPlayerChatCommand.OnGossip(...)")
     --[[
     打印出 callback 参数的值
     --]]
@@ -353,19 +353,19 @@ function PlayerChatCommandTeleport.OnGossip(
         --[[
         这里是你选择了一个 gossip 选项后的处理逻辑, intid 是当前选择的选项的 ID.
         这里会尝试根据 ID 获得这个 menuData 的 ID. (我觉得可能可以直接用
-        PlayerChatCommandTeleport.MENU_DATA_MAPPER[intid] 不知道为什么原作者没有这么做,
+        TeleportPlayerChatCommand.MENU_DATA_MAPPER[intid] 不知道为什么原作者没有这么做,
         可能原作者想要防御性编程吧).
         --]]
-        local menuDataMapper = PlayerChatCommandTeleport.MENU_DATA_MAPPER
+        local menuDataMapper = TeleportPlayerChatCommand.MENU_DATA_MAPPER
         local menuDataKey = "ID"
         local menuDataValue = intid
-        local menuDataId = PlayerChatCommandTeleport.FindIdByKeyValue(
+        local menuDataId = TeleportPlayerChatCommand.FindIdByKeyValue(
             menuDataMapper,
             menuDataKey,
             menuDataValue
         )
         print(string.format("Player select the %s item", intid))
-        local menuData = PlayerChatCommandTeleport.MENU_DATA_MAPPER[menuDataId]
+        local menuData = TeleportPlayerChatCommand.MENU_DATA_MAPPER[menuDataId]
         if not menuData then
             error("This should not happen")
         end
@@ -374,7 +374,7 @@ function PlayerChatCommandTeleport.OnGossip(
         if menuData.mapid then
             player:Teleport(menuData.mapid, menuData.x, menuData.y, menuData.z, menuData.o)
             player:GossipComplete()
-            print("Exit: PlayerChatCommandTeleport.OnGossip(...)")
+            print("Exit: TeleportPlayerChatCommand.OnGossip(...)")
             return
         end
 
@@ -382,18 +382,18 @@ function PlayerChatCommandTeleport.OnGossip(
         如果 menuData 中既没有 mapid 字段, 那么有两种情况:
 
         1. 这是一个 submenu 的 gossip item: 此时这个 intid 就是 submenu 的 ID.
-            我们将其穿给 PlayerChatCommandTeleport.BuildMenu 既可进入到下一级菜单.
+            我们将其穿给 TeleportPlayerChatCommand.BuildMenu 既可进入到下一级菜单.
         2. 这是一个 "返回" 的 gossip item: 此时这个 intid ... TODO 完善这里的文档.
         --]]
         local arg_sender = object
-        PlayerChatCommandTeleport.BuildMenu(arg_sender, player, intid)
+        TeleportPlayerChatCommand.BuildMenu(arg_sender, player, intid)
         print("Exit: GOSSIP_EVENT_ON_SELECT branch")
     end
-    print("Exit: PlayerChatCommandTeleport.OnGossip(...)")
+    print("Exit: TeleportPlayerChatCommand.OnGossip(...)")
 end
 
 -- entry point
-function PlayerChatCommandTeleport.OnChat(event, player, msg, _, lang)
+function TeleportPlayerChatCommand.OnChat(event, player, msg, _, lang)
     --[[
     Global:RegisterPlayerEvent@PLAYER_EVENT_ON_CHAT 的参数列表:
 
@@ -405,7 +405,7 @@ function PlayerChatCommandTeleport.OnChat(event, player, msg, _, lang)
 
     See https://www.azerothcore.org/pages/eluna/Global/RegisterPlayerEvent.html
     --]]
-    print("Enter function PlayerEventCommandHandler()")
+    print("Enter function TeleportPlayerChatCommand.OnChat()")
     print(string.format("event = %s", event))
     print(string.format("player = %s", player))
     print(string.format("msg = %s", msg))
@@ -416,9 +416,9 @@ function PlayerChatCommandTeleport.OnChat(event, player, msg, _, lang)
         -- 首先清空已有的 gossip menu, 确保每次玩家输入 #tele 命令时菜单都是新的.
         player:GossipClearMenu()
 
-        -- 然后调用 PlayerChatCommandTeleport.BuildMenu 函数来构建传送菜单.
+        -- 然后调用 TeleportPlayerChatCommand.BuildMenu 函数来构建传送菜单.
         local arg_sender = player
-        PlayerChatCommandTeleport.BuildMenu(arg_sender, player, ROOT_MENU_DATA_PARENT_ID)
+        TeleportPlayerChatCommand.BuildMenu(arg_sender, player, ROOT_MENU_DATA_PARENT_ID)
     end
 end
 
@@ -431,7 +431,7 @@ Register Events
 下面是 RegisterPlayerEvent 的 event code.
 See: https://www.azerothcore.org/pages/eluna/Global/RegisterPlayerEvent.html
 --]]
-RegisterPlayerEvent(PLAYER_EVENT_ON_CHAT, PlayerChatCommandTeleport.OnChat)
+RegisterPlayerEvent(PLAYER_EVENT_ON_CHAT, TeleportPlayerChatCommand.OnChat)
 
 --[[
 下面是 RegisterPlayerGossipEvent 的 event code
@@ -440,6 +440,6 @@ See: https://www.azerothcore.org/pages/eluna/Global/RegisterPlayerGossipEvent.ht
 RegisterPlayerGossipEvent(
     PLAYER_GOSSIP_MENU_ID,
     GOSSIP_EVENT_ON_SELECT,
-    PlayerChatCommandTeleport.OnGossip
+    TeleportPlayerChatCommand.OnGossip
 )
 print("========== player_tele_chat_command.lua is ready to use ==========")
