@@ -11,7 +11,7 @@ How it Work
 ------------------------------------------------------------------------------
 第一步, 我们需在数据库中创建许多 NPC Vendor 的定义. 这部分内容请参考 `CPI (Consumer Price Index) <https://acore-db-app.readthedocs.io/en/latest/search.html?q=CPI+Consumer+price+index&check_keywords=yes&area=default>`_.
 
-第二步, 有了许多 Vendor 之后, 我们需要将它们按照层级结构组织起来. 这个步骤我在这个 `Google Sheet <https://docs.google.com/spreadsheets/d/1e4I2-d4JyVbsvOcdePruqev-rkyYYMUPrwkI_fieIYw/edit?gid=1169636448#gid=1169636448>`_ 中进行
+第二步, 有了许多 Vendor 之后, 我们需要将它们按照层级结构组织起来. 这个步骤我在这个 `Google Sheet <https://docs.google.com/spreadsheets/d/1e4I2-d4JyVbsvOcdePruqev-rkyYYMUPrwkI_fieIYw/edit?gid=1169636448#gid=1169636448>`_ 中进行.
 
 第三步, 将 Google Sheet 中的内容拷贝到本地 `cpi_multivendor_lua_data.tsv <https://github.com/search?q=repo%3AMacHu-GWU%2Facore_eluna-project+cpi_multivendor_lua_data.tsv&type=code>`_ 文件中. 然后用 `gen_lua.py <https://github.com/search?q=repo%3AMacHu-GWU%2Facore_eluna-project+gen_lua.py&type=code>`_ 将其转化为 Lua 脚本. 最终生成的 Lua 脚本长这个样子:
 
