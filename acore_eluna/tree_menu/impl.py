@@ -46,13 +46,31 @@ class MenuType(T.TypedDict):
     parent: T.Optional[int]
 
 
+NO_PARENT = 0
+
+
 @dataclasses.dataclass
 class LuaCodeGenerator:
-    """ """
+    """
+    这个类能帮助你将一个在 Google sheet 中定义的 dataframe 转化成 Lua 中所需要的
+    gossip menu 的数据.
+
+    :param id_start: The starting id for the menu item. If the value is 1,
+        then your menu id will be 1, 2, 3, .... If you have multiple gossip
+        menus, you have to ensure their id does not overlap.
+    :param item_icon: The icon for the item. If the ``_icon`` field in the
+        data frame is None, then this icon will be used.
+    :param menu_icon: The icon for the menu. If the ``_icon`` field in the
+        data frame is None, then this icon will be used.
+    """
 
     id_start: int = dataclasses.field()
-    item_icon: IconEnum = dataclasses.field()
-    menu_icon: IconEnum = dataclasses.field()
+    item_icon: IconEnum = dataclasses.field(default=IconEnum.GOSSIP_ICON_CHAT)
+    menu_icon: IconEnum = dataclasses.field(default=IconEnum.GOSSIP_ICON_CHAT)
+
+    def __post_init__(self):
+        if self.id_start < 1:
+            raise ValueError("The id_start must be greater than 0.")
 
     def make_item(
         self,
@@ -64,7 +82,7 @@ class LuaCodeGenerator:
         一个 item 就是一个 Gossip 中点击了就能产生业务逻辑的选项.
         """
         if row["_icon"] is None:
-            icon = self.menu_icon.value
+            icon = self.item_icon.value
         else:  # pragma: no cover
             icon = row["_icon"]
         item = {
@@ -191,29 +209,15 @@ class LuaCodeGenerator:
             _items=_items,
         )
 
-    def data_to_lua_code(self, data: T.Dict[str, T.Any]) -> str:  # pragma: no cover
-        """
-        这个方法能将你的 gossip menu option 中的核心业务数据转化成 lua 的源代码.
-        因为我们无法预测用户的核心业务数据长什么样, 所以只能交给用户来自己实现.
-
-        Example:
-
-            >>> self.data_to_lua_code({"buff_id": 1, "buff_name": "王者祝福"})
-            '{ buff_id = 1, buff_name = "王者祝福" }'
-        """
-        raise NotImplementedError(
-            "You have to implement LuaCodeGenerator.data_to_lua_code(data) "
-            "method to generate lua code!"
-        )
-
     def generate_lua_code(
         self,
         menu_data_list: T.List[T.Union[ItemType, MenuType]],
+        data_to_lua_code: T.Callable[[T.Dict[str, T.Any]], str],
     ) -> str:
         """
         根据 menu data 生成业务数据代码.
 
-        例如如果 menu_data_list 长这个样子:
+        例如如果 ``menu_data_list`` 长这个样子:
 
         .. code-block:: python
 
@@ -301,20 +305,25 @@ class LuaCodeGenerator:
 
         .. code-block:: lua
 
-            [1] = { id = 1, name = "牧师", is_menu = true, icon = 3, parent = nil },
+            [1] = { id = 1, name = "牧师", is_menu = true, icon = 3, parent = 0 },
             [2] = { id = 2, name = "真言术韧", is_menu = true, icon = 3, parent = 1 },
             [3] = { id = 3, name = "真言术韧 60", is_menu = false, icon = 3, parent = 2, data = { buff_id = 10938, buff_count = 1 } },
             [4] = { id = 4, name = "真言术韧 70", is_menu = false, icon = 3, parent = 2, data = { buff_id = 25389, buff_count = 1 } },
             [5] = { id = 5, name = "真言术韧 80", is_menu = false, icon = 3, parent = 2, data = { buff_id = 48161, buff_count = 1 } },
-            [6] = { id = 6, name = "法师", is_menu = true, icon = 3, parent = nil },
+            [6] = { id = 6, name = "法师", is_menu = true, icon = 3, parent = 0 },
             [7] = { id = 7, name = "奥术智慧", is_menu = true, icon = 3, parent = 6 },
             [8] = { id = 8, name = "奥术智慧 60", is_menu = false, icon = 3, parent = 7, data = { buff_id = 10157, buff_count = 1 } },
             [9] = { id = 9, name = "奥术智慧 70", is_menu = false, icon = 3, parent = 7, data = { buff_id = 27126, buff_count = 1 } },
             [10] = { id = 10, name = "奥术智慧 80", is_menu = false, icon = 3, parent = 7, data = { buff_id = 42995, buff_count = 1 } },
-            [11] = { id = 11, name = "战斗", is_menu = true, icon = 3, parent = nil },
+            [11] = { id = 11, name = "战斗", is_menu = true, icon = 3, parent = 0 },
             [12] = { id = 12, name = "兽群领袖光环", is_menu = false, icon = 3, parent = 11, data = { buff_id = 24932, buff_count = 1 } },
             [13] = { id = 13, name = "枭兽光环", is_menu = false, icon = 3, parent = 11, data = { buff_id = 24907, buff_count = 1 } },
-            [14] = { id = 14, name = "王者祝福", is_menu = false, icon = 3, parent = nil, data = { buff_id = 56525, buff_count = 1 } },
+            [14] = { id = 14, name = "王者祝福", is_menu = false, icon = 3, parent = 0, data = { buff_id = 56525, buff_count = 1 } },
+
+        ``data_to_lua_code`` 参数是一个函数, 用来将你的核心业务数据转化成 lua 的源代码.
+        也就是上面例子中把 ``{"buff_id": 42995, "buff_count": 1}`` 转化成
+        ``{ buff_id = 42995, buff_count = 1 }``.
+        因为我们无法预测用户的核心业务数据长什么样, 所以只能交给用户来自己实现.
         """
         lines = list()
         tab = " " * 4
@@ -325,7 +334,7 @@ class LuaCodeGenerator:
             icon = menu_data["icon"]
             parent = menu_data["parent"]
             if parent is None:
-                parent = "nil"
+                parent = f"{NO_PARENT}"
             if menu_data["is_menu"]:
                 line = (
                     f"{tab}[{id}] = {{ "
@@ -337,7 +346,7 @@ class LuaCodeGenerator:
                     f"}},"
                 )
             else:
-                data = self.data_to_lua_code(menu_data["data"])
+                data = data_to_lua_code(menu_data["data"])
                 line = (
                     f"{tab}[{id}] = {{ "
                     f"id = {id}, "

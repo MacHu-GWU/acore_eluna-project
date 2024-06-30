@@ -8,16 +8,14 @@ from pathlib import Path
 from acore_eluna.tree_menu.impl import IconEnum, LuaCodeGenerator
 
 
-@dataclasses.dataclass
-class MyLuaCodeGenerator(LuaCodeGenerator):
-    def data_to_lua_code(self, data: T.Dict[str, T.Any]) -> str:
-        buff_id = data["buff_id"]
-        buff_count = data["buff_count"]
-        return f"{{ buff_id = {buff_id}, buff_count = {buff_count} }}"
+def data_to_lua_code(data: T.Dict[str, T.Any]) -> str:
+    buff_id = data["buff_id"]
+    buff_count = data["buff_count"]
+    return f"{{ buff_id = {buff_id}, buff_count = {buff_count} }}"
 
 
 def test_lua_code_generator():
-    lua_code_generator = MyLuaCodeGenerator(
+    lua_code_generator = LuaCodeGenerator(
         id_start=1,
         item_icon=IconEnum.GOSSIP_ICON_BATTLE,
         menu_icon=IconEnum.GOSSIP_ICON_TRAINER,
@@ -26,10 +24,10 @@ def test_lua_code_generator():
         Path(__file__).absolute().parent.joinpath("test_data.tsv"),
         separator="\t",
     )
-    from rich import print as rprint
 
     menu_data_list = lua_code_generator.dataframe_to_menu_data(df)
-    # rprint(menu_data_list)
+    # from rich import print as rprint # for debug only
+    # rprint(menu_data_list) # for debug only
     assert menu_data_list == [
         {"id": 1, "name": "牧师", "is_menu": True, "icon": 3, "parent": None},
         {"id": 2, "name": "真言术韧", "is_menu": True, "icon": 3, "parent": 1},
@@ -109,8 +107,11 @@ def test_lua_code_generator():
             "data": {"buff_id": 56525, "buff_count": 1},
         },
     ]
-    lua_code = lua_code_generator.generate_lua_code(menu_data_list)
-    print(lua_code)
+    lua_code = lua_code_generator.generate_lua_code(
+        menu_data_list=menu_data_list,
+        data_to_lua_code=data_to_lua_code,
+    )
+    # print("\n" + lua_code) # for debug only
 
 
 if __name__ == "__main__":
