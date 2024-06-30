@@ -1,3 +1,5 @@
+.. _cpi-multivendor-lua:
+
 CPI MultiVendor Lua
 ==============================================================================
 
@@ -13,11 +15,19 @@ How it Work
 
 第二步, 有了许多 Vendor 之后, 我们需要将它们按照层级结构组织起来. 这个步骤我在这个 `Google Sheet <https://docs.google.com/spreadsheets/d/1e4I2-d4JyVbsvOcdePruqev-rkyYYMUPrwkI_fieIYw/edit?gid=1169636448#gid=1169636448>`_ 中进行.
 
-第三步, 将 Google Sheet 中的内容拷贝到本地 `cpi_multivendor_lua_data.tsv <https://github.com/search?q=repo%3AMacHu-GWU%2Facore_eluna-project+cpi_multivendor_lua_data.tsv&type=code>`_ 文件中. 然后用 `gen_lua.py <https://github.com/search?q=repo%3AMacHu-GWU%2Facore_eluna-project+gen_lua.py&type=code>`_ 将其转化为 Lua 脚本. 最终生成的 Lua 脚本长这个样子:
+第三步, 将 Google Sheet 中的内容拷贝到本地 `cpi_multivendor_lua_data.tsv <https://github.com/search?q=repo%3AMacHu-GWU%2Facore_eluna-project+cpi_multivendor_lua_data.tsv&type=code>`_ 文件中. 然后用 `gen_lua.py <https://github.com/search?q=repo%3AMacHu-GWU%2Facore_eluna-project+gen_lua.py&type=code>`_ 将其转化为 Lua 脚本.
 
-.. dropdown:: cpi_multivendor.lua.jinja2.py
+.. dropdown:: gen_lua.py
 
-    .. literalinclude:: ./cpi_multivendor.lua.jinja2.py
+    .. literalinclude:: ./gen_lua.py
+       :language: lua
+       :linenos:
+
+最终生成的 Lua 脚本长这个样子:
+
+.. dropdown:: cpi_multivendor.lua
+
+    .. literalinclude:: ./cpi_multivendor.lua
        :language: lua
        :linenos:
 

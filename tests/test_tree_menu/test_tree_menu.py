@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import dataclasses
 import typing as T
 
 import polars as pl
 from pathlib import Path
-from acore_eluna.tree_menu.impl import IconEnum, LuaCodeGenerator
+from acore_eluna.tree_menu.impl import IconEnum, LuaCodeGenerator, NO_PARENT
 
 
 def data_to_lua_code(data: T.Dict[str, T.Any]) -> str:
@@ -35,7 +34,7 @@ def test_lua_code_generator():
             "id": 3,
             "name": "真言术韧 60",
             "is_menu": False,
-            "icon": 3,
+            "icon": 9,
             "parent": 2,
             "data": {"buff_id": 10938, "buff_count": 1},
         },
@@ -43,7 +42,7 @@ def test_lua_code_generator():
             "id": 4,
             "name": "真言术韧 70",
             "is_menu": False,
-            "icon": 3,
+            "icon": 9,
             "parent": 2,
             "data": {"buff_id": 25389, "buff_count": 1},
         },
@@ -51,7 +50,7 @@ def test_lua_code_generator():
             "id": 5,
             "name": "真言术韧 80",
             "is_menu": False,
-            "icon": 3,
+            "icon": 9,
             "parent": 2,
             "data": {"buff_id": 48161, "buff_count": 1},
         },
@@ -61,7 +60,7 @@ def test_lua_code_generator():
             "id": 8,
             "name": "奥术智慧 60",
             "is_menu": False,
-            "icon": 3,
+            "icon": 9,
             "parent": 7,
             "data": {"buff_id": 10157, "buff_count": 1},
         },
@@ -69,7 +68,7 @@ def test_lua_code_generator():
             "id": 9,
             "name": "奥术智慧 70",
             "is_menu": False,
-            "icon": 3,
+            "icon": 9,
             "parent": 7,
             "data": {"buff_id": 27126, "buff_count": 1},
         },
@@ -77,7 +76,7 @@ def test_lua_code_generator():
             "id": 10,
             "name": "奥术智慧 80",
             "is_menu": False,
-            "icon": 3,
+            "icon": 9,
             "parent": 7,
             "data": {"buff_id": 42995, "buff_count": 1},
         },
@@ -86,7 +85,7 @@ def test_lua_code_generator():
             "id": 12,
             "name": "兽群领袖光环",
             "is_menu": False,
-            "icon": 3,
+            "icon": 9,
             "parent": 11,
             "data": {"buff_id": 24932, "buff_count": 1},
         },
@@ -94,7 +93,7 @@ def test_lua_code_generator():
             "id": 13,
             "name": "枭兽光环",
             "is_menu": False,
-            "icon": 3,
+            "icon": 9,
             "parent": 11,
             "data": {"buff_id": 24907, "buff_count": 1},
         },
@@ -102,7 +101,7 @@ def test_lua_code_generator():
             "id": 14,
             "name": "王者祝福",
             "is_menu": False,
-            "icon": 3,
+            "icon": 9,
             "parent": None,
             "data": {"buff_id": 56525, "buff_count": 1},
         },

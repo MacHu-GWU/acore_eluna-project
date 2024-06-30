@@ -1,5 +1,9 @@
 --[[
-这个脚本用于让玩家通过跟特定 NPC 对话, 打开购买物品的菜单.
+这个脚本用于让玩家通过跟特定 NPC 对话, 在层级菜单中选择要购买哪一类型的物品, 然后点击
+对话选项打开购买物品的菜单.
+
+注: 如果你需要创建一个类似的功能, 你可以复制这个 jinja2 脚本, 然后替换下面几个 variable.
+里如果你要做一个能将玩家传送到指定地点的 NPC, 你的新模块叫做
 --]]
 
 --[[
@@ -26,7 +30,7 @@ local GOSSIP_EVENT_ON_SELECT = 2
 local NPC_TEXT_ID_1 = 1 -- Greetings, $n
 local CPI_VENDOR_ENTRY = 5005001 -- 这个 NPC flag 需要是 129
 local EMPTY_SENDER = 0 -- 用于标识没有 sender 的情况
-local ROOT_VENDOR_DATA_PARENT_ID = 0 -- 如果一个菜单没有 parent, 那么它的 PARENT_ID 属性的值就是这个
+local ROOT_CHOICE_DATA_PARENT_ID = 0 -- 如果一个菜单选项没有 parent, 那么它的 parent 属性的值就是这个
 
 --[[
 下面是所有 ICON 代码的枚举. 你可以在 "OptionIcon" 一节中看到所有图标的说明.
@@ -35,17 +39,17 @@ See: https://www.azerothcore.org/wiki/gossip_menu_option
 local GOSSIP_ICON_TALK = 7
 
 --[[
-这是我们所有跟 vendor 相关的逻辑的 namespace table. 它类似于面向对象中的类一样, 有属性也有方法.
+这是我们所有跟业务逻辑相关的 namespace table. 它类似于面向对象中的类一样, 有属性也有方法.
 
 例如后面的 CpiMultiVendor.OnGossip() 就是一个方法.
 --]]
 local CpiMultiVendor = {}
 
 --[[
-VENDOR_DATA_MAPPER
+CHOICE_DATA_MAPPER
 
 这个变量是最终展现给玩家的菜单的数据容器. 它是类似于一个 Python 字典的结构. 其中 key 是
-vendorData 的唯一 ID, value 是 vendorData 本身.
+choiceData 的唯一 id, value 是 choiceData 本身.
 
 {
     1: { id = 1, name = "...", is_menu = ..., icon = ..., parent = ..., data = { npc_id = ... } },
@@ -53,91 +57,91 @@ vendorData 的唯一 ID, value 是 vendorData 本身.
     ...
 }
 --]]
-CpiMultiVendor.VENDOR_DATA_MAPPER = {
+CpiMultiVendor.CHOICE_DATA_MAPPER = {
 {{ lua_code }}
 }
 
-function CpiMultiVendor.FindIdByKeyValue(vendorDataMapper, vendorDataKey, vendorDataValue)
+function CpiMultiVendor.FindIdByKeyValue(choiceDataMapper, choiceDataKey, choiceDataValue)
     --[[
-    这个函数的目的是查找第一个 key, value pair 符合条件的 vendorData 的 ID.
+    这个函数的目的是查找第一个 key, value pair 符合条件的 choiceData 的 id.
 
-    类似于 ``SELECT ID FROM table WHERE table.vendorDataKey = vendorDataValue LIMIT 1``.
+    类似于 ``SELECT ID FROM table WHERE table.choiceDataKey = choiceDataValue LIMIT 1``.
 
-    :type vendorDataMapper: table
-    :param vendorDataMapper: 一个 {ID: vendorData} 的字典, 其中 ID 是整数.
-    :type vendorDataKey: string
-    :param vendorDataKey: vendorData 中的 key
-    :type vendorDataKey: any
-    :param vendorDataValue: vendorData 中的 value
+    :type choiceDataMapper: table
+    :param choiceDataMapper: 一个 {id: choiceData} 的字典, 其中 id 是整数.
+    :type choiceDataKey: string
+    :param choiceDataKey: choiceData 中的 key
+    :type choiceDataKey: any
+    :param choiceDataValue: choiceData 中的 value
 
-    :return: 符合条件的 vendorData 的 ID.
+    :return: 符合条件的 choiceData 的 id.
     --]]
-    for vendorDataId, vendorData in pairs(vendorDataMapper) do
-        if vendorDataKey then
-            if vendorData[vendorDataKey] == vendorDataValue then
-                return vendorDataId
+    for choiceDataId, choiceData in pairs(choiceDataMapper) do
+        if choiceDataKey then
+            if choiceData[choiceDataKey] == choiceDataValue then
+                return choiceDataId
             end
         else -- 貌似无论如何都不会进入到这段逻辑中
-            if vendorData == vendorDataValue then
-                return vendorDataId
+            if choiceData == choiceDataValue then
+                return choiceDataId
             end
         end
     end
 end
 
-function CpiMultiVendor.FindAllByKeyValue(vendorDataMapper, vendorDataKey, vendorDataValue)
+function CpiMultiVendor.FindAllByKeyValue(choiceDataMapper, choiceDataKey, choiceDataValue)
     --[[
-    这个函数的目的是查找所有 key, value pair 符合条件的 vendorData 的列表.
+    这个函数的目的是查找所有 key, value pair 符合条件的 choiceData 的列表.
 
-    类似于 ``SELECT ID FROM table WHERE talbe.vendorDataKey = vendorDataValue``.
+    类似于 ``SELECT ID FROM table WHERE talbe.choiceDataKey = choiceDataValue``.
 
-    :type vendorDataMapper: table
-    :param vendorDataMapper: 一个 {ID: vendorData} 的字典, 其中 ID 是整数.
-    :type vendorDataKey: string
-    :param vendorDataKey: vendorData 中的 key
-    :type vendorDataKey: any
-    :param vendorDataValue: vendorData 中的 value
+    :type choiceDataMapper: table
+    :param choiceDataMapper: 一个 {id: choiceData} 的字典, 其中 ID 是整数.
+    :type choiceDataKey: string
+    :param choiceDataKey: choiceData 中的 key
+    :type choiceDataKey: any
+    :param choiceDataValue: choiceData 中的 value
 
-    :return: 符合条件的所有 vendorData 的列表.
+    :return: 符合条件的所有 choiceData 的列表.
     --]]
-    local vendorDataList = {}
+    local choiceDataList = {}
     -- 注: 这里必须用 ipairs, 确保顺序和定义的顺序一致
-    for vendorDataId, vendorData in ipairs(vendorDataMapper) do
-        if vendorDataKey then
-            if vendorData[vendorDataKey] == vendorDataValue then
-                table.insert(vendorDataList, vendorData)
+    for choiceDataId, choiceData in ipairs(choiceDataMapper) do
+        if choiceDataKey then
+            if choiceData[choiceDataKey] == choiceDataValue then
+                table.insert(choiceDataList, choiceData)
             end
         else
-            if vendorData == vendorDataValue then
-                table.insert(vendorDataList, vendorData)
+            if choiceData == choiceDataValue then
+                table.insert(choiceDataList, choiceData)
             end
         end
     end
-    return vendorDataList
+    return choiceDataList
 end
 
-function CpiMultiVendor.BuildMenu(sender, player, parentVendorDataId)
+function CpiMultiVendor.BuildMenu(sender, player, parentChoiceDataId)
     --[[
     这个函数会是我们用来构建菜单的自定义函数.
     --]]
 
     --[[
-    1. 先根据当前给定的 parentVendorDataId 找到所有的子菜单. 如果 parentVendorDataId 是 0,
+    1. 先根据当前给定的 parentChoiceDataId 找到所有的子菜单. 如果 parentChoiceDataId 是 0,
     那么就是最顶层的菜单.
     --]]
     --print("Start: CpiMultiVendor.BuildMenu() function") -- for debug only
     --print(string.format("sender = %s", sender))
     --print(string.format("player = %s", player))
-    --print(string.format("parentVendorDataId = %s", parentVendorDataId))
+    --print(string.format("parentChoiceDataId = %s", parentChoiceDataId))
     local args = {
-        vendorDataMapper = CpiMultiVendor.VENDOR_DATA_MAPPER,
-        vendorDataKey = "parent",
-        vendorDataValue = parentVendorDataId,
+        choiceDataMapper = CpiMultiVendor.CHOICE_DATA_MAPPER,
+        choiceDataKey = "parent",
+        choiceDataValue = parentChoiceDataId,
     }
-    local vendorDataList = CpiMultiVendor.FindAllByKeyValue(
-        args.vendorDataMapper,
-        args.vendorDataKey,
-        args.vendorDataValue
+    local choiceDataList = CpiMultiVendor.FindAllByKeyValue(
+        args.choiceDataMapper,
+        args.choiceDataKey,
+        args.choiceDataValue
     )
 
     --[[
@@ -158,13 +162,13 @@ function CpiMultiVendor.BuildMenu(sender, player, parentVendorDataId)
 
     Ref: https://www.azerothcore.org/pages/eluna/Player/GossipMenuAddItem.html
     --]]
-    for _, vendorData in ipairs(vendorDataList) do
-        print(string.format("msg = %s", vendorData.name)) -- for debug only
+    for _, choiceData in ipairs(choiceDataList) do
+        print(string.format("msg = %s", choiceData.name)) -- for debug only
         args = {
-            icon = vendorData.icon,
-            msg = vendorData.name,
+            icon = choiceData.icon,
+            msg = choiceData.name,
             sender = EMPTY_SENDER,
-            intid = vendorData.id -- 这个 item 的唯一 ID
+            intid = choiceData.id -- 这个 item 的唯一 ID
         }
         player:GossipMenuAddItem(
             args.icon,
@@ -175,26 +179,26 @@ function CpiMultiVendor.BuildMenu(sender, player, parentVendorDataId)
     end
 
     --[[
-    2. 如果 parentVendorDataId 大于 0, 说明我们在一个子菜单中, 那么我们需要添加一个返回上一级菜单的选项.
+    2. 如果 parentChoiceDataId 大于 0, 说明我们在一个子菜单中, 那么我们需要添加一个返回上一级菜单的选项.
     --]]
-    if parentVendorDataId > 0 then
+    if parentChoiceDataId > 0 then
         --print("This is a submenu, add return button") -- for debug only
         args = {
-            vendorDataMapper = CpiMultiVendor.VENDOR_DATA_MAPPER,
-            vendorDataKey = "id",
-            vendorDataValue = parentVendorDataId,
+            choiceDataMapper = CpiMultiVendor.CHOICE_DATA_MAPPER,
+            choiceDataKey = "id",
+            choiceDataValue = parentChoiceDataId,
         }
-        local vendorDataId = CpiMultiVendor.FindIdByKeyValue(
-            args.vendorDataMapper,
-            args.vendorDataKey,
-            args.vendorDataValue
+        local choiceDataId = CpiMultiVendor.FindIdByKeyValue(
+            args.choiceDataMapper,
+            args.choiceDataKey,
+            args.choiceDataValue
         )
 
         args = {
             icon = GOSSIP_ICON_TALK,
-            msg = string.format("< 返回 %s", CpiMultiVendor.VENDOR_DATA_MAPPER[parentVendorDataId].name),
+            msg = string.format("< 返回上一级菜单: %s", CpiMultiVendor.CHOICE_DATA_MAPPER[parentChoiceDataId].name),
             sender = EMPTY_SENDER,
-            intid = CpiMultiVendor.VENDOR_DATA_MAPPER[vendorDataId].parent,
+            intid = CpiMultiVendor.CHOICE_DATA_MAPPER[choiceDataId].parent,
         }
         player:GossipMenuAddItem(
             args.icon,
@@ -205,9 +209,9 @@ function CpiMultiVendor.BuildMenu(sender, player, parentVendorDataId)
 
         args = {
             icon = GOSSIP_ICON_TALK,
-            msg = "<<< 回到初始菜单",
+            msg = "<<< 返回初始菜单",
             sender = EMPTY_SENDER,
-            intid = ROOT_VENDOR_DATA_PARENT_ID,
+            intid = ROOT_CHOICE_DATA_PARENT_ID,
         }
         player:GossipMenuAddItem(
             args.icon,
@@ -305,38 +309,38 @@ function CpiMultiVendor.OnGossip(event, player, creature, sender, intid, code, m
         local args = {
             sender = creature,
             player = player,
-            parentVendorDataId = ROOT_VENDOR_DATA_PARENT_ID,
+            parentChoiceDataId = ROOT_CHOICE_DATA_PARENT_ID,
         }
         CpiMultiVendor.BuildMenu(
             args.sender,
             args.player,
-            args.parentVendorDataId
+            args.parentChoiceDataId
         )
     -- 处理点击了某个菜单选项的事件. 首先我们要判断这是一个 submenu 还是一个可以立刻生效的选项
     else
         --print("Got: GOSSIP_EVENT_ON_SELECT event") -- for debug only
         local args = {
-            vendorDataMapper = CpiMultiVendor.VENDOR_DATA_MAPPER,
-            vendorDataKey = "id",
-            vendorDataValue = intid,
+            choiceDataMapper = CpiMultiVendor.CHOICE_DATA_MAPPER,
+            choiceDataKey = "id",
+            choiceDataValue = intid,
         }
-        local vendorDataId = CpiMultiVendor.FindIdByKeyValue(
-            args.vendorDataMapper,
-            args.vendorDataKey,
-            args.vendorDataValue
+        local choiceDataId = CpiMultiVendor.FindIdByKeyValue(
+            args.choiceDataMapper,
+            args.choiceDataKey,
+            args.choiceDataValue
         )
         --print(string.format("Player select the %s item", intid)) -- for debug only
-        local vendorData = CpiMultiVendor.VENDOR_DATA_MAPPER[vendorDataId]
-        if not vendorData then
+        local choiceData = CpiMultiVendor.CHOICE_DATA_MAPPER[choiceDataId]
+        if not choiceData then
             error("This should not happen") -- for debug only
         end
-        -- 获得了被选中的 vendorData, 就进入到后续的处理逻辑
-        -- 如果 vendorData 中有 data 字段, 说明被选中的事一个可以立刻生效的选项
-        if vendorData.data then
+        -- 获得了被选中的 choiceData, 就进入到后续的处理逻辑
+        -- 如果 choiceData 中有 data 字段, 说明被选中的事一个可以立刻生效的选项
+        if choiceData.data then
             -- Ref: https://www.azerothcore.org/pages/eluna/Player/SendListInventory.html
             args = {
                 sender = creature,
-                vendor_id = vendorData.data.npc_id,
+                vendor_id = choiceData.data.npc_id,
             }
             player:SendListInventory(
                 args.sender,
@@ -348,7 +352,7 @@ function CpiMultiVendor.OnGossip(event, player, creature, sender, intid, code, m
         end
 
         --[[
-        如果 vendorData 中没有 data 字段, 那么有两种情况:
+        如果 choiceData 中没有 data 字段, 那么有两种情况:
 
         1. 这是一个 submenu 的 gossip item: 此时这个 intid 就是 submenu 的 id.
             我们将其穿给 CpiMultiVendor.BuildMenu 既可进入到下一级菜单.
@@ -357,12 +361,12 @@ function CpiMultiVendor.OnGossip(event, player, creature, sender, intid, code, m
         args = {
             sender = creature,
             player = player,
-            parentVendorDataId = intid
+            parentChoiceDataId = intid
         }
         CpiMultiVendor.BuildMenu(
             args.sender,
             args.player,
-            args.parentVendorDataId
+            args.parentChoiceDataId
         )
         --print("Exit: GOSSIP_EVENT_ON_SELECT branch") -- for debug only
     end
