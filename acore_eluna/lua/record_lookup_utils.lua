@@ -13,16 +13,16 @@ local record_lookup_utils = {}
 ---@param recordList table: record 的列表
 ---@param idKey string: record 的 id 在哪个 key 下面
 ---@return table: id -> record 的字典
-function record_lookup_utils.MakeMapping(
+function record_lookup_utils.MakeRecordDict(
     recordList,
     idKey
 )
     if idKey == nil then idKey = "id" end
-    local recordMapping = {}
+    local recordDict = {}
     for _, record in ipairs(recordList) do
-        recordMapping[record[idKey]] = record
+        recordDict[record[idKey]] = record
     end
-    return recordMapping
+    return recordDict
 end
 
 --[[
