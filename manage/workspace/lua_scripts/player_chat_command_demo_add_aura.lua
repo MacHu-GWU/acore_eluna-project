@@ -41,7 +41,7 @@ end
 -- 定义玩家输入的命令
 local command = "#addaura"
 -- 定义 gossip menu 的 id, 要确保在有多个类似于这个 App 的情况下, 这个 id 是唯一的
-local gossip_menu_id = 103001
+local gossip_menu_id = 103000
 -- 定义 gossip menu 的 npc_text_id
 local npc_text_id = gossip_menu_utils.DEFAULT_NPC_TEXT_ID
 

@@ -6,16 +6,14 @@ Google Sheet: https://docs.google.com/spreadsheets/d/1yAUSTbGuo-2pAKnb4TOzX_2GeW
 
 import typing as T
 from pathlib import Path
+
 import polars as pl
+import acore_eluna.tree_menu.api as tree_menu
 
 df_list: T.List[pl.DataFrame] = list()
 
-path_excel = (
-    Path(__file__)
-    .absolute()
-    .parent.joinpath("World-of-Warcraft-WotLK-Teleport-GPS-传送坐标汇总.xlsx")
-)
-
+dir_here = Path(__file__).absolute().parent
+path_excel = dir_here.joinpath("World-of-Warcraft-WotLK-Teleport-GPS-传送坐标汇总.xlsx")
 
 # --- 01-common
 schema = dict(
@@ -23,11 +21,12 @@ schema = dict(
     y=str,
     z=str,
     map=str,
-    h1=str,
-    h2=str,
-    h3=str,
-    h4=str,
-    h5=str,
+    _icon=int,
+    _h1=str,
+    _h2=str,
+    _h3=str,
+    _h4=str,
+    # _h5=str,
 )
 
 
@@ -45,11 +44,12 @@ for row in df.to_dicts():
         y=y,
         z=z,
         map=map,
-        h1="常用地点",
-        h2=row["name"],
-        h3=None,
-        h4=None,
-        h5=None,
+        _icon=None,
+        _h1="常用地点",
+        _h2=row["name"],
+        _h3=None,
+        _h4=None,
+        # _h5=None,
     )
     rows.append(new_row)
 df = pl.DataFrame(rows, schema=schema)
@@ -79,11 +79,12 @@ def process_zone(
             y=y,
             z=z,
             map=map,
-            h1="大地图",
-            h2=group_name,
-            h3=row["zone"],
-            h4=row["loc"],
-            h5=None,
+            _icon=None,
+            _h1="大地图",
+            _h2=group_name,
+            _h3=row["zone"],
+            _h4=row["loc"],
+            # _h5=None,
         )
         rows.append(new_row)
     df = pl.DataFrame(rows, schema=schema)
@@ -101,4 +102,25 @@ for sheet_name, group_name in [
     df_list.append(process_zone(sheet_name=sheet_name, group_name=group_name))
 
 df = pl.concat(df_list)
-df.write_csv("teleport_chat_command.tsv", separator="\t")
+# df.write_csv("teleport_player_chat_command.tsv", separator="\t")
+
+
+# --- Generate Lua Code
+def data_to_lua_code(data: dict) -> str:
+    x = data["x"]
+    y = data["y"]
+    z = data["z"]
+    map = data["map"]
+    return f"{{ x = {x}, y = {y}, z = {z}, map = {map} }}"
+
+
+lua_code_generator = tree_menu.LuaCodeGenerator(
+    id_start=370001,
+    item_option_icon=tree_menu.IconEnum.GOSSIP_ICON_TAXI,
+    back_to_prev="返回 {parent_name}",
+    back_to_top="返回 主菜单",
+)
+option_list = lua_code_generator.dataframe_to_option_list(df)
+lua_code = lua_code_generator.generate_lua_code(option_list, data_to_lua_code)
+path_lua = dir_here / "lua_code.lua"
+path_lua.write_text(lua_code)

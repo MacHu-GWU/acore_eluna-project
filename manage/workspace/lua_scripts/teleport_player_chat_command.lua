@@ -1,9 +1,5 @@
 --[[
-一个用于演示如何使用 player_chat_command_utils 创建一个档玩家输入 #addaura 命令后,
-打开一个 gossip 菜单来挑选 buff, 点击选项后加 buff 的自定义功能.
-
-这只是一个例子, 根据这个例子你可以定义更多的命令, 以及自己决定点击选项后会发生什么事情.
-例如可以做到点击后传送, 给予物品, 打开商店银行等等.
+当玩家在聊天框输入 #tele 命令后, 弹出一个菜单让玩家选择要传送的地点.
 --]]
 
 local gossip_menu_utils = require("gossip_menu_utils")
@@ -685,7 +681,7 @@ end
 -- 定义玩家输入的命令
 local command = "#tele"
 -- 定义 gossip menu 的 id, 要确保在有多个类似于这个 App 的情况下, 这个 id 是唯一的
-local gossip_menu_id = 103002
+local gossip_menu_id = 103001
 -- 定义 gossip menu 的 npc_text_id
 local npc_text_id = gossip_menu_utils.DEFAULT_NPC_TEXT_ID
 
