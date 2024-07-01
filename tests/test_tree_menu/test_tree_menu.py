@@ -57,11 +57,11 @@ def test_lua_code_generator():
         },
         {
             "id": 1006,
-            "name": "Back to 真言术韧",
+            "name": "Back to 牧师",
             "type": "back",
             "icon": 7,
             "parent": 1002,
-            "back_to": 1002,
+            "back_to": 1001,
         },
         {
             "id": 1007,
@@ -89,14 +89,6 @@ def test_lua_code_generator():
         },
         {
             "id": 1010,
-            "name": "Back to 牧师",
-            "type": "back",
-            "icon": 7,
-            "parent": 1001,
-            "back_to": 1001,
-        },
-        {
-            "id": 1011,
             "name": "Back to Top",
             "type": "back",
             "icon": 7,
@@ -104,28 +96,12 @@ def test_lua_code_generator():
             "back_to": 0,
         },
         {
-            "id": 1012,
+            "id": 1011,
             "name": "王者祝福",
             "type": "item",
             "icon": 9,
             "parent": 0,
             "data": {"buff_id": 56525, "buff_count": 1},
-        },
-        {
-            "id": 1013,
-            "name": "Back to None",
-            "type": "back",
-            "icon": 7,
-            "parent": 0,
-            "back_to": 0,
-        },
-        {
-            "id": 1014,
-            "name": "Back to Top",
-            "type": "back",
-            "icon": 7,
-            "parent": 0,
-            "back_to": 0,
         },
     ]
     lua_code = lua_code_generator.generate_lua_code(
