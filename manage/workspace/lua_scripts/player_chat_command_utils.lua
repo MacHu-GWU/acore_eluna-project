@@ -228,17 +228,6 @@ function player_chat_command_utils.PlayerChatCommandTreeGossipMenuHandler:Regist
             GOSSIP_EVENT_ON_SELECT,
             PlayerGossipOnSelectEventHandler
     )
-    --local PlayerEventOnChatEventHandler = PlayChatCommandDemoAddAura.PlayerChatCommandTreeGossipMenuHandler:BindMethod("OnEnterCommand")
-    --RegisterPlayerEvent(
-    --        PLAYER_EVENT_ON_CHAT,
-    --        PlayerEventOnChatEventHandler
-    --)
-    --local PlayerGossipOnSelectEventHandler = PlayChatCommandDemoAddAura.PlayerChatCommandTreeGossipMenuHandler:BindMethod("OnSelectOption")
-    --RegisterPlayerGossipEvent(
-    --        self.gossip_menu_id,
-    --        GOSSIP_EVENT_ON_SELECT,
-    --        PlayerGossipOnSelectEventHandler
-    --)
 end
 
 return player_chat_command_utils

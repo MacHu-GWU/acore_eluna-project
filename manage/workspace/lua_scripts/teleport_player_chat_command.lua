@@ -660,7 +660,7 @@ TeleportPlayerChatCommand.gossipOptionList = {
 
 --[[
 定义了点击选项后的行为. 也是这个 App 最关键的函数.
-在这个例子中, 点击选项后会给玩家加 buff.
+在这个例子中, 点击选项后会将玩家传送到指定地点.
 --]]
 ---@param player Player,
 ---@param itemGossipOption ItemGossipOptionType,
