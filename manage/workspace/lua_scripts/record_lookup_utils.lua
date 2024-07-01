@@ -10,11 +10,24 @@ local record_lookup_utils = {}
 
 --[[
 在定义原始的 record 时, 通常是以列表的形式给出, 这样可以让我们精细化控制它们的顺序.
-而在进行映射的时, 我们需要一个 id -> record 的字典. 这个函数可以将列表转化成字典
+而在进行映射的时, 我们需要一个 id -> record 的字典. 这个函数可以将列表转化成字典.
+
+简单来说, 这个函数相当于下面的这个 Python 函数.
+
+.. code-block:: python
+
+    def make_record_dict(
+        record_list: list[ dict[str, any] ],
+        id_key: str = "id"
+    ) -> dict[str|int, dict[str, any] ]:
+        record_dict = {}
+        for record in record_list:
+            record_dict[ record[id_key] ] = record
+        return record_dict
 --]]
----@param recordList Record[]: record 的列表
----@param idKey string: record 的 id 在哪个 key 下面
----@return table<string|number, Record>: id -> record 的字典
+---@param recordList Record[] record 的列表
+---@param idKey string record 的 id 在哪个 key 下面
+---@return table<string|number, Record> id -> record 的字典
 function record_lookup_utils.MakeRecordDict(
     recordList,
     idKey
@@ -30,10 +43,25 @@ end
 --[[
 在所有的 record 中筛选出所有符合 record.key == value 的 record 列表.
 这类似于 ``SELECT * FROM records WHERE records.key = value``.
+
+简单来说, 这个函数相当于下面的这个 Python 函数.
+
+.. code-block:: python
+
+    def filter_by_key_value(
+        record_list: list[ dict[str, any] ],
+        key: str,
+        value: any
+    ) -> list[ dict[str, any] ]:
+        filtered_record_list = []
+        for record in record_list:
+            if record[key] == value:
+                filtered_record_list.append(record)
+        return filtered_record_list
 --]]
----@param recordList Record[]: 所有 record 的列表
----@param idKey string: record 的 id 在哪个 key 下面
----@return Record[]: 满足条件的 record 的列表
+---@param recordList Record[] 所有 record 的列表
+---@param idKey string record 的 id 在哪个 key 下面
+---@return Record[] 满足条件的 record 的列表
 function record_lookup_utils.FilterByKeyValue(
     recordList,
     key,

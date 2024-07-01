@@ -32,37 +32,40 @@ gossip_menu_utils.DEFAULT_NPC_TEXT_ID = 1 -- Greetings, $n
 --]]
 
 ---@class GossipOptionType
----@field id number:
----@field name string:
----@field type string:
----@field icon number:
----@field parent number:
----@field data? table:
----@field back_to? number:
+---@field id number
+---@field name string 在 gossip menu 上显示的名字.
+---@field type string "item" | "menu" | "back".
+---  @see ItemGossipOptionType when type = "item"
+---  @see MenuGossipOptionType when type = "menu"
+---  @see BackGossipOptionType when type = "back"
+---@field icon number
+---@field parent number 父菜单的 id, 如果是最顶层菜单, 则传 gossip_menu_utils.NO_PARENT_ID 的值.
+---@field data? table 一些额外的数据, 如果 type 是 item, 那么这个 data 就是跟业务逻辑相关的数据.
+---@field back_to? number 如果 type 是 back, 那么这个值就是要返回到的菜单的 id. 这个 id
+---  会被当做 parent id 用来查找所有的子菜单选项.
 
 ---@class ItemGossipOptionType
----@field id number:
----@field name string:
----@field type string:
----@field icon number:
----@field parent number:
----@field data table:
+---@field id number
+---@field name string
+---@field type string "item"
+---@field icon number
+---@field parent number
+---@field data table 必须要有这个字段. 哪怕没有业务数据都要放一个空的 table 在这里.
 
 ---@class MenuGossipOptionType
 ---@field id number:
 ---@field name string:
----@field type string:
+---@field type string: "menu"
 ---@field icon number:
 ---@field parent number:
 
 ---@class BackGossipOptionType
 ---@field id number:
 ---@field name string:
----@field type string:
+---@field type string: "back"
 ---@field icon number:
 ---@field parent number:
----@field back_to number:
-
+---@field back_to number: 必须要有这个字段.
 
 --[[
 Player:GossipMenuAddItem 是一个给 Player 当前的 gossip menu 添加一个 item 的方法.
@@ -71,19 +74,18 @@ Player:GossipMenuAddItem 是一个给 Player 当前的 gossip menu 添加一个 
 Ref: https://www.azerothcore.org/pages/eluna/Player/GossipMenuAddItem.html
 --]]
 ---@class GossipMenuItemType
----@field icon number:
----@field msg string:
----@field sender number: 表示这个 gossip menu 的发送者. 注意这是一个 number, 如果发送者是
+---@field icon number
+---@field msg string
+---@field sender number 表示这个 gossip menu 的发送者. 注意这是一个 number, 如果发送者是
 -----  Creature 或是 Player, 这个值应该是它们的 GUID. 但是如果我们不需要知道 sender 是谁,
 -----  传 gossip_menu_utils.NO_SENDER_ID 既可. 这个可以跟实际触发 gossip 的 Object 不一定.
 -----  例如你是因为与 Creature 对话而触发 gossip, 但将 sender 设置为一个 Player 也是可以的.
 -----  eluna 框架本身不会用这个值做任何逻辑, 而只是在后续的 event 中带上这个变量, 以便我们开发者
 -----  可以根据这个值来做一些逻辑.
----@field intid number: 这个 gossip menu item (也是 gossip option) 的唯一 id.
+---@field intid number 这个 gossip menu item (也是 gossip option) 的唯一 id.
 ---@field code? boolean @ default: false
 ---@field popup? number @ default: nil
 ---@field money? number @ default: 0
-
 
 --[[
 构建一个即将发送给 Player 的 GossipMenu 菜单所需的 item 的数据. 它会根据 parentGossipOptionDataId
@@ -91,26 +93,23 @@ Ref: https://www.azerothcore.org/pages/eluna/Player/GossipMenuAddItem.html
 数据而不是直接用 Player:GossipMenuAddItem 和 Player:GossipSendMenu 把菜单发出去是因为
 这样更方便进行测试.
 --]]
----@param gossipOptionList GossipOptionType[]: 一个包含所有 GossipOption 的列表
----@param gossipOptionDict table<number, GossipOptionType>: 一个 id -> GossipOption 的字典
----@param parentGossipOptionDataId number: 父菜单的 id, 如果是最顶层菜单,
+---@param gossipOptionList GossipOptionType[] 一个包含所有 GossipOption 的列表
+---@param gossipOptionDict table<number, GossipOptionType> 一个 id -> GossipOption 的字典
+---@param parentGossipOptionDataId number 父菜单的 id, 如果是最顶层菜单,
 ---  则传 gossip_menu_utils.NO_PARENT_ID 的值
----@param sender number: 表示这个 gossip menu 的发送者. 注意这是一个 number, 如果发送者是
+---@param sender number 表示这个 gossip menu 的发送者. 注意这是一个 number, 如果发送者是
 ---  Creature 或是 Player, 这个值应该是它们的 GUID. 但是如果我们不需要知道 sender 是谁,
 ---  传 gossip_menu_utils.NO_SENDER_ID 既可. 这个可以跟实际触发 gossip 的 Object 不一定.
 ---  例如你是因为与 Creature 对话而触发 gossip, 但将 sender 设置为一个 Player 也是可以的.
 ---  eluna 框架本身不会用这个值做任何逻辑, 而只是在后续的 event 中带上这个变量, 以便我们开发者
 ---  可以根据这个值来做一些逻辑.
----@return GossipMenuItemType[]:
+---@return GossipMenuItemType[]
 function gossip_menu_utils.BuildGossipMenuItemList(
         gossipOptionList,
         gossipOptionDict,
         parentGossipOptionId,
         sender
 )
-    --[[
-    这个函数会是我们用来构建菜单的自定义函数.
-    --]]
     print("| +---- Start: gossip_menu_utils.BuildGossipMenuItemList(...)") -- for debug only
     print(string.format("| | gossipOptionList = %s", gossipOptionList))
     print(string.format("| | gossipOptionDict = %s", gossipOptionDict))
@@ -152,19 +151,19 @@ end
 将 function gossip_menu_utils.BuildGossipMenuItemList() 返回的数据真真正正的以一个
 gossip menu 的形式发给 player.
 --]]
----@param player Player,
----@param gossipMenuItemList GossipMenuItemType[],
+---@param player Player
+---@param gossipMenuItemList GossipMenuItemType[]
 ---@param sender Object, 表示这个 gossip menu 的发送者. 一般是一个 Creature, Player
 ---  这个跟实际触发 gossip 的 Object 可以不一样. 如果你是跟 Creature 对话而触发 gossip,
 ---  那么一般就传这个 Creature 对象. 而如果你是用聊天框输入 chat 命令来触发, 那么就传
 ---  一个 Player 对象.
----@param npc_text_id number, 这是 acore_world.npc_text 表中的 id, 用于获取对话文本
+---@param npc_text_id number 这是 acore_world.npc_text 表中的 id, 用于获取对话文本
 --  详情请参考 https://www.azerothcore.org/wiki/npc_text
----@param menu_id number, 这是 acore_world.gossip_menu 表中的 id, 用于获取这个 menu 里
+---@param menu_id number 这是 acore_world.gossip_menu 表中的 id, 用于获取这个 menu 里
 ---  有哪些 option. 如果你没有用 Player:GossipMenuAddItem() 方法添加 option,
 ---  那么你可以用这个 menu_id 从数据库中获得 option. 而如果你用 Player:GossipMenuAddItem()
 ---  自己创建了这个 menu 的所有 option, 那么你可以传 gossip_menu_utils.TEST_ONLY_GOSSIP_MENU_ID
--- 详情请参考 https://www.azerothcore.org/wiki/gossip_menu
+--   详情请参考 https://www.azerothcore.org/wiki/gossip_menu
 function gossip_menu_utils.SendGossipMenu(
         player,
         gossipMenuItemList,
