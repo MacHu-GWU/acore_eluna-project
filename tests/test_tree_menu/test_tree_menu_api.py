@@ -5,8 +5,8 @@ from acore_eluna.tree_menu import api
 
 def test():
     _ = api.IconEnum
-    _ = api.ItemType
-    _ = api.MenuType
+    _ = api.ItemOptionType
+    _ = api.MenuOptionType
     _ = api.LuaCodeGenerator
 
 

@@ -7,6 +7,6 @@ Usage example::
 """
 
 from .impl import IconEnum
-from .impl import ItemType
-from .impl import MenuType
+from .impl import ItemOptionType
+from .impl import MenuOptionType
 from .impl import LuaCodeGenerator

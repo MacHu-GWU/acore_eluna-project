@@ -4,7 +4,7 @@ import typing as T
 
 import polars as pl
 from pathlib import Path
-from acore_eluna.tree_menu.impl import IconEnum, LuaCodeGenerator, NO_PARENT
+from acore_eluna.tree_menu.impl import IconEnum, LuaCodeGenerator, ROOT_PARENT_ID
 
 
 def data_to_lua_code(data: T.Dict[str, T.Any]) -> str:
@@ -15,9 +15,9 @@ def data_to_lua_code(data: T.Dict[str, T.Any]) -> str:
 
 def test_lua_code_generator():
     lua_code_generator = LuaCodeGenerator(
-        id_start=1,
-        item_icon=IconEnum.GOSSIP_ICON_BATTLE,
-        menu_icon=IconEnum.GOSSIP_ICON_TRAINER,
+        id_start=1001,
+        item_option_icon=IconEnum.GOSSIP_ICON_BATTLE,
+        menu_option_icon=IconEnum.GOSSIP_ICON_TRAINER,
     )
     df = pl.read_csv(
         Path(__file__).absolute().parent.joinpath("test_data.tsv"),
@@ -25,92 +25,113 @@ def test_lua_code_generator():
     )
 
     menu_data_list = lua_code_generator.dataframe_to_menu_data(df)
-    # from rich import print as rprint # for debug only
-    # rprint(menu_data_list) # for debug only
+    # from rich import print as rprint  # for debug only
+    # rprint(menu_data_list)  # for debug only
     assert menu_data_list == [
-        {"id": 1, "name": "牧师", "is_menu": True, "icon": 3, "parent": None},
-        {"id": 2, "name": "真言术韧", "is_menu": True, "icon": 3, "parent": 1},
+        {"id": 1001, "name": "牧师", "is_menu": True, "icon": 3, "parent": 0},
+        {"id": 1002, "name": "真言术韧", "is_menu": True, "icon": 3, "parent": 1001},
         {
-            "id": 3,
+            "id": 1003,
             "name": "真言术韧 60",
             "is_menu": False,
             "icon": 9,
-            "parent": 2,
+            "parent": 1002,
             "data": {"buff_id": 10938, "buff_count": 1},
         },
         {
-            "id": 4,
+            "id": 1004,
             "name": "真言术韧 70",
             "is_menu": False,
             "icon": 9,
-            "parent": 2,
+            "parent": 1002,
             "data": {"buff_id": 25389, "buff_count": 1},
         },
         {
-            "id": 5,
+            "id": 1005,
             "name": "真言术韧 80",
             "is_menu": False,
             "icon": 9,
-            "parent": 2,
+            "parent": 1002,
             "data": {"buff_id": 48161, "buff_count": 1},
         },
-        {"id": 6, "name": "法师", "is_menu": True, "icon": 3, "parent": None},
-        {"id": 7, "name": "奥术智慧", "is_menu": True, "icon": 3, "parent": 6},
         {
-            "id": 8,
-            "name": "奥术智慧 60",
-            "is_menu": False,
-            "icon": 9,
-            "parent": 7,
-            "data": {"buff_id": 10157, "buff_count": 1},
+            "id": 1006,
+            "name": "Back to 真言术韧",
+            "is_menu": True,
+            "icon": 7,
+            "parent": 1002,
+            "back_to": 1002,
         },
         {
-            "id": 9,
-            "name": "奥术智慧 70",
-            "is_menu": False,
-            "icon": 9,
-            "parent": 7,
-            "data": {"buff_id": 27126, "buff_count": 1},
+            "id": 1007,
+            "name": "Back to Top",
+            "is_menu": True,
+            "icon": 7,
+            "parent": 1002,
+            "back_to": 0,
         },
         {
-            "id": 10,
-            "name": "奥术智慧 80",
+            "id": 1008,
+            "name": "反恐惧结界",
             "is_menu": False,
             "icon": 9,
-            "parent": 7,
-            "data": {"buff_id": 42995, "buff_count": 1},
+            "parent": 1001,
+            "data": {"buff_id": 6346, "buff_count": 1},
         },
-        {"id": 11, "name": "战斗", "is_menu": True, "icon": 3, "parent": None},
         {
-            "id": 12,
-            "name": "兽群领袖光环",
+            "id": 1009,
+            "name": "能量灌注",
             "is_menu": False,
             "icon": 9,
-            "parent": 11,
-            "data": {"buff_id": 24932, "buff_count": 1},
+            "parent": 1001,
+            "data": {"buff_id": 10060, "buff_count": 1},
         },
         {
-            "id": 13,
-            "name": "枭兽光环",
-            "is_menu": False,
-            "icon": 9,
-            "parent": 11,
-            "data": {"buff_id": 24907, "buff_count": 1},
+            "id": 1010,
+            "name": "Back to 牧师",
+            "is_menu": True,
+            "icon": 7,
+            "parent": 1001,
+            "back_to": 1001,
         },
         {
-            "id": 14,
+            "id": 1011,
+            "name": "Back to Top",
+            "is_menu": True,
+            "icon": 7,
+            "parent": 1001,
+            "back_to": 0,
+        },
+        {
+            "id": 1012,
             "name": "王者祝福",
             "is_menu": False,
             "icon": 9,
-            "parent": None,
+            "parent": 0,
             "data": {"buff_id": 56525, "buff_count": 1},
+        },
+        {
+            "id": 1013,
+            "name": "Back to None",
+            "is_menu": True,
+            "icon": 7,
+            "parent": 0,
+            "back_to": 0,
+        },
+        {
+            "id": 1014,
+            "name": "Back to Top",
+            "is_menu": True,
+            "icon": 7,
+            "parent": 0,
+            "back_to": 0,
         },
     ]
     lua_code = lua_code_generator.generate_lua_code(
         menu_data_list=menu_data_list,
         data_to_lua_code=data_to_lua_code,
     )
-    # print("\n" + lua_code) # for debug only
+    # print("\n" + lua_code)  # for debug only
 
 
 if __name__ == "__main__":
