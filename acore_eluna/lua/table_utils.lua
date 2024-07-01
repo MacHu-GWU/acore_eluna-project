@@ -5,7 +5,7 @@
 local table_utils = {}
 
 ---计算一个类似 Python dict 的 table 的长度
----@param dict table
+---@param dict table<any, any>
 ---@return number
 function table_utils.GetDictLength(dict)
     local count = 0
