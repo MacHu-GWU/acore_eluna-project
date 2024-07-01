@@ -24,16 +24,17 @@ def test_lua_code_generator():
         separator="\t",
     )
 
-    menu_data_list = lua_code_generator.dataframe_to_menu_data(df)
+    option_list = lua_code_generator.dataframe_to_option_list(df)
     # from rich import print as rprint  # for debug only
-    # rprint(menu_data_list)  # for debug only
-    assert menu_data_list == [
-        {"id": 1001, "name": "牧师", "is_menu": True, "icon": 3, "parent": 0},
-        {"id": 1002, "name": "真言术韧", "is_menu": True, "icon": 3, "parent": 1001},
+    #
+    # rprint(option_list)  # for debug only
+    assert option_list == [
+        {"id": 1001, "name": "牧师", "type": "menu", "icon": 3, "parent": 0},
+        {"id": 1002, "name": "真言术韧", "type": "menu", "icon": 3, "parent": 1001},
         {
             "id": 1003,
             "name": "真言术韧 60",
-            "is_menu": False,
+            "type": "item",
             "icon": 9,
             "parent": 1002,
             "data": {"buff_id": 10938, "buff_count": 1},
@@ -41,7 +42,7 @@ def test_lua_code_generator():
         {
             "id": 1004,
             "name": "真言术韧 70",
-            "is_menu": False,
+            "type": "item",
             "icon": 9,
             "parent": 1002,
             "data": {"buff_id": 25389, "buff_count": 1},
@@ -49,7 +50,7 @@ def test_lua_code_generator():
         {
             "id": 1005,
             "name": "真言术韧 80",
-            "is_menu": False,
+            "type": "item",
             "icon": 9,
             "parent": 1002,
             "data": {"buff_id": 48161, "buff_count": 1},
@@ -57,7 +58,7 @@ def test_lua_code_generator():
         {
             "id": 1006,
             "name": "Back to 真言术韧",
-            "is_menu": True,
+            "type": "back",
             "icon": 7,
             "parent": 1002,
             "back_to": 1002,
@@ -65,7 +66,7 @@ def test_lua_code_generator():
         {
             "id": 1007,
             "name": "Back to Top",
-            "is_menu": True,
+            "type": "back",
             "icon": 7,
             "parent": 1002,
             "back_to": 0,
@@ -73,7 +74,7 @@ def test_lua_code_generator():
         {
             "id": 1008,
             "name": "反恐惧结界",
-            "is_menu": False,
+            "type": "item",
             "icon": 9,
             "parent": 1001,
             "data": {"buff_id": 6346, "buff_count": 1},
@@ -81,7 +82,7 @@ def test_lua_code_generator():
         {
             "id": 1009,
             "name": "能量灌注",
-            "is_menu": False,
+            "type": "item",
             "icon": 9,
             "parent": 1001,
             "data": {"buff_id": 10060, "buff_count": 1},
@@ -89,7 +90,7 @@ def test_lua_code_generator():
         {
             "id": 1010,
             "name": "Back to 牧师",
-            "is_menu": True,
+            "type": "back",
             "icon": 7,
             "parent": 1001,
             "back_to": 1001,
@@ -97,7 +98,7 @@ def test_lua_code_generator():
         {
             "id": 1011,
             "name": "Back to Top",
-            "is_menu": True,
+            "type": "back",
             "icon": 7,
             "parent": 1001,
             "back_to": 0,
@@ -105,7 +106,7 @@ def test_lua_code_generator():
         {
             "id": 1012,
             "name": "王者祝福",
-            "is_menu": False,
+            "type": "item",
             "icon": 9,
             "parent": 0,
             "data": {"buff_id": 56525, "buff_count": 1},
@@ -113,7 +114,7 @@ def test_lua_code_generator():
         {
             "id": 1013,
             "name": "Back to None",
-            "is_menu": True,
+            "type": "back",
             "icon": 7,
             "parent": 0,
             "back_to": 0,
@@ -121,14 +122,14 @@ def test_lua_code_generator():
         {
             "id": 1014,
             "name": "Back to Top",
-            "is_menu": True,
+            "type": "back",
             "icon": 7,
             "parent": 0,
             "back_to": 0,
         },
     ]
     lua_code = lua_code_generator.generate_lua_code(
-        menu_data_list=menu_data_list,
+        option_list=option_list,
         data_to_lua_code=data_to_lua_code,
     )
     # print("\n" + lua_code)  # for debug only

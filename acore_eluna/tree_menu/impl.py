@@ -29,6 +29,23 @@ class IconEnum(enum.IntEnum):
     GOSSIP_ICON_DOT = 10  # Yellow dot
 
 
+class OptionTypeEnum(str, enum.Enum):
+    """
+    表示一个 Gossip 中可点击的选项.
+    """
+
+    ITEM = "item"
+    MENU = "menu"
+    BACK = "back"
+
+
+OptionTypeName = T.Literal[
+    OptionTypeEnum.ITEM.value,
+    OptionTypeEnum.MENU.value,
+    OptionTypeEnum.BACK.value,
+]
+
+
 class ItemOptionType(T.TypedDict):
     """
     表示一个 Gossip 中点击了就能产生业务逻辑的选项.
@@ -36,7 +53,7 @@ class ItemOptionType(T.TypedDict):
 
     id: int
     name: str
-    is_menu: bool
+    type: OptionTypeName
     icon: int
     parent: int
     data: T.Dict[str, T.Any]
@@ -49,7 +66,7 @@ class MenuOptionType(T.TypedDict):
 
     id: int
     name: str
-    is_menu: bool
+    type: OptionTypeName
     icon: int
     parent: int
 
@@ -61,7 +78,7 @@ class BackOptionType(T.TypedDict):
 
     id: int
     name: str
-    is_menu: bool
+    type: OptionTypeName
     icon: int
     parent: int
     back_to: int
@@ -115,7 +132,7 @@ class LuaCodeGenerator:
         item_option = {
             "id": self.id_start,
             "name": row[f"_h{header}"],
-            "is_menu": False,
+            "type": OptionTypeEnum.ITEM.value,
             "icon": icon,
             "parent": parent,
         }
@@ -137,7 +154,7 @@ class LuaCodeGenerator:
         menu_option = {
             "id": self.id_start,
             "name": name,
-            "is_menu": True,
+            "type": OptionTypeEnum.MENU.value,
             "icon": self.menu_option_icon.value,
             "parent": parent,
         }
@@ -156,7 +173,7 @@ class LuaCodeGenerator:
         back_option = {
             "id": self.id_start,
             "name": name,
-            "is_menu": True,
+            "type": OptionTypeEnum.BACK.value,
             "icon": self.back_option_icon.value,
             "parent": parent,
             "back_to": back_to,
@@ -243,16 +260,16 @@ class LuaCodeGenerator:
 
         return _items
 
-    def dataframe_to_menu_data(
+    def dataframe_to_option_list(
         self,
         df: pl.DataFrame,
         _parent: int = ROOT_PARENT_ID,
         _header: int = 1,
         _items: T.Optional[T.List[T.Dict[str, T.Any]]] = None,
-    ) -> T.List[T.Union[ItemOptionType, MenuOptionType]]:
+    ) -> T.List[OptionType]:
         """
-        输入一个 dataframe, 自动根据层级关系生成 gossip menu 中的 item 和 menu option,
-        返回一个列表, 里面的每个元素都是一个按钮.
+        输入一个 dataframe, 自动根据层级关系生成 gossip menu 中的 option 列表.
+        里面的每个元素都是一个按钮.
 
         这个函数用到了递归实现.
 
@@ -290,29 +307,29 @@ class LuaCodeGenerator:
 
     def generate_lua_code(
         self,
-        menu_data_list: T.List[T.Union[ItemOptionType, MenuOptionType]],
+        option_list: T.List[OptionType],
         data_to_lua_code: T.Callable[[T.Dict[str, T.Any]], str],
     ) -> str:
         """
-        根据 menu data 生成业务数据代码.
+        根据 option list 生成业务数据代码.
 
-        例如如果 ``menu_data_list`` 长这个样子:
+        例如如果 ``option_list`` 长这个样子:
 
         .. code-block:: python
 
             [
-                {'id': 1001, 'name': '牧师', 'is_menu': True, 'icon': 3, 'parent': None},
+                {'id': 1001, 'name': '牧师', 'type': 'menu', 'icon': 3, 'parent': 0},
                 {
                     'id': 1002,
                     'name': '真言术韧',
-                    'is_menu': True,
+                    'type': 'menu',
                     'icon': 3,
                     'parent': 1001
                 },
                 {
                     'id': 1003,
                     'name': '真言术韧 60',
-                    'is_menu': False,
+                    'type': 'item',
                     'icon': 9,
                     'parent': 1002,
                     'data': {'buff_id': 10938, 'buff_count': 1}
@@ -320,7 +337,7 @@ class LuaCodeGenerator:
                 {
                     'id': 1004,
                     'name': '真言术韧 70',
-                    'is_menu': False,
+                    'type': 'item',
                     'icon': 9,
                     'parent': 1002,
                     'data': {'buff_id': 25389, 'buff_count': 1}
@@ -328,7 +345,7 @@ class LuaCodeGenerator:
                 {
                     'id': 1005,
                     'name': '真言术韧 80',
-                    'is_menu': False,
+                    'type': 'item',
                     'icon': 9,
                     'parent': 1002,
                     'data': {'buff_id': 48161, 'buff_count': 1}
@@ -336,21 +353,23 @@ class LuaCodeGenerator:
                 {
                     'id': 1006,
                     'name': 'Back to 真言术韧',
-                    'is_menu': True,
+                    'type': 'back',
                     'icon': 7,
-                    'parent': 1002
+                    'parent': 1002,
+                    'back_to': 1002
                 },
                 {
                     'id': 1007,
                     'name': 'Back to Top',
-                    'is_menu': True,
+                    'type': 'back',
                     'icon': 7,
-                    'parent': 0
+                    'parent': 1002,
+                    'back_to': 0
                 },
                 {
                     'id': 1008,
                     'name': '反恐惧结界',
-                    'is_menu': False,
+                    'type': 'item',
                     'icon': 9,
                     'parent': 1001,
                     'data': {'buff_id': 6346, 'buff_count': 1}
@@ -358,7 +377,7 @@ class LuaCodeGenerator:
                 {
                     'id': 1009,
                     'name': '能量灌注',
-                    'is_menu': False,
+                    'type': 'item',
                     'icon': 9,
                     'parent': 1001,
                     'data': {'buff_id': 10060, 'buff_count': 1}
@@ -366,24 +385,42 @@ class LuaCodeGenerator:
                 {
                     'id': 1010,
                     'name': 'Back to 牧师',
-                    'is_menu': True,
+                    'type': 'back',
                     'icon': 7,
-                    'parent': 1001
+                    'parent': 1001,
+                    'back_to': 1001
                 },
                 {
                     'id': 1011,
                     'name': 'Back to Top',
-                    'is_menu': True,
+                    'type': 'back',
                     'icon': 7,
-                    'parent': 0
+                    'parent': 1001,
+                    'back_to': 0
                 },
                 {
                     'id': 1012,
                     'name': '王者祝福',
-                    'is_menu': False,
+                    'type': 'item',
                     'icon': 9,
-                    'parent': None,
+                    'parent': 0,
                     'data': {'buff_id': 56525, 'buff_count': 1}
+                },
+                {
+                    'id': 1013,
+                    'name': 'Back to None',
+                    'type': 'back',
+                    'icon': 7,
+                    'parent': 0,
+                    'back_to': 0
+                },
+                {
+                    'id': 1014,
+                    'name': 'Back to Top',
+                    'type': 'back',
+                    'icon': 7,
+                    'parent': 0,
+                    'back_to': 0
                 }
             ]
 
@@ -391,18 +428,20 @@ class LuaCodeGenerator:
 
         .. code-block:: lua
 
-            { id = 1001, name = "牧师", is_menu = true, icon = 3, parent = 0 },
-            { id = 1002, name = "真言术韧", is_menu = true, icon = 3, parent = 1001 },
-            { id = 1003, name = "真言术韧 60", is_menu = false, icon = 9, parent = 1002, data = { buff_id = 10938, buff_count = 1 } },
-            { id = 1004, name = "真言术韧 70", is_menu = false, icon = 9, parent = 1002, data = { buff_id = 25389, buff_count = 1 } },
-            { id = 1005, name = "真言术韧 80", is_menu = false, icon = 9, parent = 1002, data = { buff_id = 48161, buff_count = 1 } },
-            { id = 1006, name = "Back to 真言术韧", is_menu = true, icon = 7, parent = 1002 },
-            { id = 1007, name = "Back to Top", is_menu = true, icon = 7, parent = 0 },
-            { id = 1008, name = "反恐惧结界", is_menu = false, icon = 9, parent = 1001, data = { buff_id = 6346, buff_count = 1 } },
-            { id = 1009, name = "能量灌注", is_menu = false, icon = 9, parent = 1001, data = { buff_id = 10060, buff_count = 1 } },
-            { id = 1010, name = "Back to 牧师", is_menu = true, icon = 7, parent = 1001 },
-            { id = 1011, name = "Back to Top", is_menu = true, icon = 7, parent = 0 },
-            { id = 1012, name = "王者祝福", is_menu = false, icon = 9, parent = 0, data = { buff_id = 56525, buff_count = 1 } },
+            { id = 1001, name = "牧师", type = "menu", icon = 3, parent = 0 },
+            { id = 1002, name = "真言术韧", type = "menu", icon = 3, parent = 1001 },
+            { id = 1003, name = "真言术韧 60", type = "item", icon = 9, parent = 1002, data = { buff_id = 10938, buff_count = 1 } },
+            { id = 1004, name = "真言术韧 70", type = "item", icon = 9, parent = 1002, data = { buff_id = 25389, buff_count = 1 } },
+            { id = 1005, name = "真言术韧 80", type = "item", icon = 9, parent = 1002, data = { buff_id = 48161, buff_count = 1 } },
+            { id = 1006, name = "Back to 真言术韧", type = "back", icon = 7, parent = 1002, back_to = 1002 },
+            { id = 1007, name = "Back to Top", type = "back", icon = 7, parent = 1002, back_to = 0 },
+            { id = 1008, name = "反恐惧结界", type = "item", icon = 9, parent = 1001, data = { buff_id = 6346, buff_count = 1 } },
+            { id = 1009, name = "能量灌注", type = "item", icon = 9, parent = 1001, data = { buff_id = 10060, buff_count = 1 } },
+            { id = 1010, name = "Back to 牧师", type = "back", icon = 7, parent = 1001, back_to = 1001 },
+            { id = 1011, name = "Back to Top", type = "back", icon = 7, parent = 1001, back_to = 0 },
+            { id = 1012, name = "王者祝福", type = "item", icon = 9, parent = 0, data = { buff_id = 56525, buff_count = 1 } },
+            { id = 1013, name = "Back to None", type = "back", icon = 7, parent = 0, back_to = 0 },
+            { id = 1014, name = "Back to Top", type = "back", icon = 7, parent = 0, back_to = 0 },
 
         ``data_to_lua_code`` 参数是一个函数, 用来将你的核心业务数据转化成 lua 的源代码.
         也就是上面例子中把 ``{"buff_id": 42995, "buff_count": 1}`` 转化成
@@ -411,35 +450,47 @@ class LuaCodeGenerator:
         """
         lines = list()
         tab = " " * 4
-        for menu_data in menu_data_list:
-            id = menu_data["id"]
-            name = menu_data["name"]
-            is_menu = "true" if menu_data["is_menu"] else "false"
-            icon = menu_data["icon"]
-            parent = menu_data["parent"]
-            if parent is None:
-                parent = f"{ROOT_PARENT_ID}"
-            if menu_data["is_menu"]:
+        for option in option_list:
+            id = option["id"]
+            name = option["name"]
+            type = option["type"]
+            icon = option["icon"]
+            parent = option["parent"]
+            if type == OptionTypeEnum.ITEM.value:
+                data = data_to_lua_code(option["data"])
                 line = (
                     f"{tab}{{ "
                     f"id = {id}, "
                     f'name = "{name}", '
-                    f"is_menu = {is_menu}, "
-                    f"icon = {icon}, "
-                    f"parent = {parent} "
-                    f"}},"
-                )
-            else:
-                data = data_to_lua_code(menu_data["data"])
-                line = (
-                    f"{tab}{{ "
-                    f"id = {id}, "
-                    f'name = "{name}", '
-                    f"is_menu = {is_menu}, "
+                    f'type = "{type}", '
                     f"icon = {icon}, "
                     f"parent = {parent}, "
                     f"data = {data} "
                     f"}},"
                 )
+            elif type == OptionTypeEnum.MENU.value:
+                line = (
+                    f"{tab}{{ "
+                    f"id = {id}, "
+                    f'name = "{name}", '
+                    f'type = "{type}", '
+                    f"icon = {icon}, "
+                    f"parent = {parent} "
+                    f"}},"
+                )
+            elif type == OptionTypeEnum.BACK.value:
+                back_to = option["back_to"]
+                line = (
+                    f"{tab}{{ "
+                    f"id = {id}, "
+                    f'name = "{name}", '
+                    f'type = "{type}", '
+                    f"icon = {icon}, "
+                    f"parent = {parent}, "
+                    f"back_to = {back_to} "
+                    f"}},"
+                )
+            else:  # pragma: no cover
+                raise TypeError(f"Unknown type {type!r}")
             lines.append(line)
         return "\n".join(lines)
