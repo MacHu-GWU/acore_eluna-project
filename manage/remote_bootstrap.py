@@ -7,13 +7,16 @@ sudo /home/ubuntu/.pyenv/shims/python3.11 -c "$(curl -fsSL https://raw.githubuse
 from acore_server.api import Server
 from acore_server_bootstrap.api import Remoter
 from acore_soap_app.api import run_soap_command
-from settings import bsm, sync_lua_scripts
+from acore_eluna.sync_lua_scripts import sync_lua_script_for_bmt_app_dev_us_east_1
+
+from settings import bsm
 
 server_id = "sbx-black"
 server = Server.get(bsm=bsm, server_id=server_id)
 remoter = Remoter(ssm_client=bsm.ssm_client, server=server)
 
-sync_lua_scripts(server_id=server_id, reload=True)
+sync_lua_script_for_bmt_app_dev_us_east_1(server_id=server_id, reload=True)
+
 # remoter.apply_mod_lua_engine_conf()
 # remoter.run_server()
 # remoter.list_session()

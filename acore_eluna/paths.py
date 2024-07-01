@@ -20,3 +20,9 @@ bin_pytest = dir_venv_bin / "pytest"
 dir_htmlcov = dir_project_root / "htmlcov"
 path_cov_index_html = dir_htmlcov / "index.html"
 dir_unit_test = dir_project_root / "tests"
+
+# ------------------------------------------------------------------------------
+# Workspace Related
+# ------------------------------------------------------------------------------
+dir_workspace = dir_project_root / "manage" / "workspace"
+dir_local_lua_scripts = dir_workspace / "lua_scripts"

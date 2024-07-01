@@ -9,6 +9,7 @@ local gossip_menu_utils = {}
 gossip_menu_utils.NO_PARENT_ID = 0
 gossip_menu_utils.NO_SENDER_ID = 0
 gossip_menu_utils.NO_GOSSIP_MENU_ID = 21
+gossip_menu_utils.DEFAULT_NPC_TEXT_ID = 1 -- Greetings, $n
 
 --[[
 **GossipOption 对象**
@@ -26,15 +27,16 @@ gossip_menu_utils.NO_GOSSIP_MENU_ID = 21
 ---@class GossipOptionType
 ---@field id number:
 ---@field name string:
----@field is_menu boolean:
+---@field type string:
 ---@field icon number:
 ---@field parent number:
 ---@field data? table:
----
+---@field back_to? number:
+
 ---@class ItemGossipOptionType
 ---@field id number:
 ---@field name string:
----@field is_menu boolean:
+---@field type string:
 ---@field icon number:
 ---@field parent number:
 ---@field data table:
@@ -42,9 +44,17 @@ gossip_menu_utils.NO_GOSSIP_MENU_ID = 21
 ---@class MenuGossipOptionType
 ---@field id number:
 ---@field name string:
----@field is_menu boolean:
+---@field type string:
 ---@field icon number:
 ---@field parent number:
+
+---@class BackGossipOptionType
+---@field id number:
+---@field name string:
+---@field type string:
+---@field icon number:
+---@field parent number:
+---@field back_to number:
 
 
 --[[
@@ -86,27 +96,29 @@ Ref: https://www.azerothcore.org/pages/eluna/Player/GossipMenuAddItem.html
 ---  可以根据这个值来做一些逻辑.
 ---@return GossipMenuItemType[]:
 function gossip_menu_utils.BuildGossipMenuItemList(
-    gossipOptionList,
-    gossipOptionDict,
-    parentGossipOptionId,
-    sender
+        gossipOptionList,
+        gossipOptionDict,
+        parentGossipOptionId,
+        sender
 )
     --[[
     这个函数会是我们用来构建菜单的自定义函数.
     --]]
-    print("----- Start: gossip_menu_utils.FilterMenuData(...)") -- for debug only
+    print("----- Start: gossip_menu_utils.BuildGossipMenuItemList(...)") -- for debug only
     print(string.format("  gossipOptionList = %s", gossipOptionList))
     print(string.format("  gossipOptionDict = %s", gossipOptionDict))
     print(string.format("  parentGossipOptionId = %s", parentGossipOptionId))
     print(string.format("  sender = %s", sender))
-    if sender == nil then sender = gossip_menu_utils.NO_SENDER_ID end
+    if sender == nil then
+        sender = gossip_menu_utils.NO_SENDER_ID
+    end
 
     local gossipMenuItemList = {}
 
     local filteredGossipOptionList = record_lookup_utils.FilterByKeyValue(
-        gossipOptionList,
-        "parent",
-        parentGossipOptionId
+            gossipOptionList,
+            "parent",
+            parentGossipOptionId
     )
     for _, gossipOption in ipairs(filteredGossipOptionList) do
         print(string.format("  Found gossipOption.name = %s", gossipOption.name)) -- for debug only
@@ -124,11 +136,15 @@ function gossip_menu_utils.BuildGossipMenuItemList(
     我们在用 Python 准备 gossipOptionList 数据的时候就包含了这个数据了, 无需再自动生成了.
     等于是我们把这一部分的逻辑从 Lua 移动到了 Python (因为 Python 更适合处理这种数据的逻辑).
     --]]
-    print("----- End: gossip_menu_utils.FilterMenuData(...)") -- for debug only
+    print("----- End: gossip_menu_utils.BuildGossipMenuItemList(...)") -- for debug only
     return gossipMenuItemList
 end
 
-
+--[[
+将 function gossip_menu_utils.BuildGossipMenuItemList() 返回的数据真真正正的以一个
+gossip menu 的形式发给 player.
+--]]
+---@param player Player,
 ---@param gossipMenuItemList GossipMenuItemType[],
 ---@param sender Object, 表示这个 gossip menu 的发送者. 一般是一个 Creature, Player
 ---  这个跟实际触发 gossip 的 Object 可以不一样. 如果你是跟 Creature 对话而触发 gossip,
@@ -142,26 +158,32 @@ end
 ---  自己创建了这个 menu 的所有 option, 那么你可以传 gossip_menu_utils.NO_GOSSIP_MENU_ID
 -- 详情请参考 https://www.azerothcore.org/wiki/gossip_menu
 function gossip_menu_utils.SendGossipMenu(
-    gossipMenuItemList,
-    sender,
-    npc_text,
-    menu_id
+        player,
+        gossipMenuItemList,
+        sender,
+        npc_text_id,
+        menu_id
 )
+    print("----- Start: gossip_menu_utils.SendGossipMenu(...)") -- for debug only
+    print("add gossipMenuItem to gossip menu") -- for debug only
     for _, gossipMenuItem in ipairs(gossipMenuItemList) do
+        print(string.format("add gossipMenuItem %s", gossipMenuItem.msg)) -- for debug only
         player:GossipMenuAddItem(
-            gossipMenuItem.icon,
-            gossipMenuItem.name,
-            gossipMenuItem.sender,
-            gossipMenuItem.id
+                gossipMenuItem.icon,
+                gossipMenuItem.msg,
+                gossipMenuItem.sender,
+                gossipMenuItem.intid
         )
     end
     -- see: https://www.azerothcore.org/pages/eluna/Player/GossipSendMenu.html
     -- if the sender is a Player, then menu_id is mandatory
+    print("send gossip menu to player")
     player:GossipSendMenu(
-        npc_text,
-        sender,
-        menu_id
+            npc_text_id,
+            sender,
+            menu_id
     )
+    print("----- End: gossip_menu_utils.SendGossipMenu(...)") -- for debug only
 end
 
 return gossip_menu_utils
