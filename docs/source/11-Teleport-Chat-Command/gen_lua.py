@@ -15,7 +15,6 @@ df_list: T.List[pl.DataFrame] = list()
 dir_here = Path(__file__).absolute().parent
 path_excel = dir_here.joinpath("World-of-Warcraft-WotLK-Teleport-GPS-传送坐标汇总.xlsx")
 
-# --- 01-common
 schema = dict(
     x=str,
     y=str,
@@ -26,7 +25,7 @@ schema = dict(
     _h2=str,
     _h3=str,
     _h4=str,
-    # _h5=str,
+    _h5=str,
 )
 
 
@@ -35,6 +34,7 @@ def parse_go_cmd(go_cmd: str) -> T.Tuple[str, str, str, str]:
     return x, y, z, map
 
 
+# --- 01-common
 df = pl.read_excel(f"{path_excel}", sheet_name="01-common")
 rows = list()
 for row in df.to_dicts():
@@ -49,7 +49,96 @@ for row in df.to_dicts():
         _h2=row["name"],
         _h3=None,
         _h4=None,
-        # _h5=None,
+        _h5=None,
+    )
+    rows.append(new_row)
+df = pl.DataFrame(rows, schema=schema)
+df_list.append(df)
+
+# --- 02-class_skill_trainer
+df = pl.read_excel(f"{path_excel}", sheet_name="02-class_skill_trainer")
+df = df.filter(pl.col("go_cmd").is_not_null())
+rows = list()
+for row in df.to_dicts():
+    x, y, z, map = parse_go_cmd(go_cmd=row["go_cmd"])
+    new_row = dict(
+        x=x,
+        y=y,
+        z=z,
+        map=map,
+        _icon=None,
+        _h1="职业技能训练师",
+        _h2=row["faction"],
+        _h3=row["class"],
+        _h4=None,
+        _h5=None,
+    )
+    rows.append(new_row)
+df = pl.DataFrame(rows, schema=schema)
+df_list.append(df)
+
+# --- 03-trade_skill_trainer
+df = pl.read_excel(f"{path_excel}", sheet_name="03-trade_skill_trainer")
+df = df.filter(pl.col("go_cmd").is_not_null())
+rows = list()
+for row in df.to_dicts():
+    x, y, z, map = parse_go_cmd(go_cmd=row["go_cmd"])
+    new_row = dict(
+        x=x,
+        y=y,
+        z=z,
+        map=map,
+        _icon=None,
+        _h1="商业技能训练师",
+        _h2=row["faction"],
+        _h3=row["category"],
+        _h4=row["sub_category"],
+        _h5=None,
+    )
+    rows.append(new_row)
+df = pl.DataFrame(rows, schema=schema)
+df_list.append(df)
+
+# --- 04-main_city
+df = pl.read_excel(f"{path_excel}", sheet_name="04-main_city")
+df = df.filter(pl.col("go_cmd").is_not_null())
+rows = list()
+for row in df.to_dicts():
+    x, y, z, map = parse_go_cmd(go_cmd=row["go_cmd"])
+    new_row = dict(
+        x=x,
+        y=y,
+        z=z,
+        map=map,
+        _icon=None,
+        _h1="主城",
+        _h2=row["zone"],
+        _h3=row["loc_name"],
+        _h4=None,
+        _h5=None,
+    )
+    rows.append(new_row)
+df = pl.DataFrame(rows, schema=schema)
+df_list.append(df)
+
+# --- 05-instance
+df = pl.read_excel(f"{path_excel}", sheet_name="05-instance")
+df = df.filter(pl.col("go_cmd").is_not_null())
+rows = list()
+for row in df.to_dicts():
+    print(row)
+    x, y, z, map = parse_go_cmd(go_cmd=row["go_cmd"])
+    new_row = dict(
+        x=x,
+        y=y,
+        z=z,
+        map=map,
+        _icon=None,
+        _h1="副本",
+        _h2=row["exp"],
+        _h3=row["instance_type"],
+        _h4=row["name"],
+        _h5=row["loc"],
     )
     rows.append(new_row)
 df = pl.DataFrame(rows, schema=schema)
@@ -84,7 +173,7 @@ def process_zone(
             _h2=group_name,
             _h3=row["zone"],
             _h4=row["loc"],
-            # _h5=None,
+            _h5=None,
         )
         rows.append(new_row)
     df = pl.DataFrame(rows, schema=schema)
@@ -102,7 +191,7 @@ for sheet_name, group_name in [
     df_list.append(process_zone(sheet_name=sheet_name, group_name=group_name))
 
 df = pl.concat(df_list)
-# df.write_csv("teleport_player_chat_command.tsv", separator="\t")
+df.write_csv("teleport_player_chat_command.tsv", separator="\t")
 
 
 # --- Generate Lua Code
