@@ -1,88 +1,57 @@
 --[[
-我们定义一个 data 就是
+我们定义一个 record 就是结构体数据. 里面有很多 key, value. 这里所有的 key 都是 string,
+并且这里有且只有一个 key 是 id. 这个 id 的值可以是 integer 也可以是 string.
 
+我们这个库提供了一组函数, 便于我们能在许多 record 的集合中找到我们想要的 record.
 --]]
 local record_lookup_utils = {}
 
-record_lookup_utils.ABC = 100
+---@alias Record table<string, any>
 
-function record_lookup_utils.FindIdByKeyValue(
-    choiceDataMapper,
-    choiceDataKey,
-    choiceDataValue
+--[[
+在定义原始的 record 时, 通常是以列表的形式给出, 这样可以让我们精细化控制它们的顺序.
+而在进行映射的时, 我们需要一个 id -> record 的字典. 这个函数可以将列表转化成字典
+--]]
+---@param recordList Record[]: record 的列表
+---@param idKey string: record 的 id 在哪个 key 下面
+---@return table<string|number, Record>: id -> record 的字典
+function record_lookup_utils.MakeRecordDict(
+    recordList,
+    idKey
 )
-    --[[
-    这个函数的目的是查找第一个 key, value pair 符合条件的 choiceData 的 id.
-
-    类似于 ``SELECT ID FROM table WHERE table.choiceDataKey = choiceDataValue LIMIT 1``.
-
-    :type choiceDataMapper: table
-    :param choiceDataMapper: 一个 {id: choiceData} 的字典, 其中 id 是整数.
-    :type choiceDataKey: string
-    :param choiceDataKey: choiceData 中的 key
-    :type choiceDataKey: any
-    :param choiceDataValue: choiceData 中的 value
-
-    :return: 符合条件的 choiceData 的 id.
-    --]]
-    --print("    ----- Start: CpiMultiVendor.FindIdByKeyValue(...) ------") -- for debug only
-    --print(string.format("      choiceDataMapper = %s", choiceDataMapper)) -- for debug only
-    --print(string.format("      choiceDataKey = %s", choiceDataKey)) -- for debug only
-    --print(string.format("      choiceDataValue = %s", choiceDataValue)) -- for debug only
-    for choiceDataId, choiceData in pairs(choiceDataMapper) do
-        if choiceDataKey then
-            if choiceData[choiceDataKey] == choiceDataValue then
-                --print("    ----- End: CpiMultiVendor.FindIdByKeyValue(...) ------") -- for debug only
-                return choiceDataId
-            end
-        else -- 貌似无论如何都不会进入到这段逻辑中
-            if choiceData == choiceDataValue then
-                --print("    ----- End: CpiMultiVendor.FindIdByKeyValue(...) ------") -- for debug only
-                return choiceDataId
-            end
-        end
+    if idKey == nil then idKey = "id" end
+    local recordDict = {}
+    for _, record in ipairs(recordList) do
+        recordDict[record[idKey]] = record
     end
-    --print("    ----- End: CpiMultiVendor.FindIdByKeyValue(...) ------") -- for debug only
+    return recordDict
 end
 
-function record_lookup_utils.FindAllByKeyValue(
-    choiceDataMapper,
-    choiceDataKey,
-    choiceDataValue
+--[[
+在所有的 record 中筛选出所有符合 record.key == value 的 record 列表.
+这类似于 ``SELECT * FROM records WHERE records.key = value``.
+--]]
+---@param recordList Record[]: 所有 record 的列表
+---@param idKey string: record 的 id 在哪个 key 下面
+---@return Record[]: 满足条件的 record 的列表
+function record_lookup_utils.FilterByKeyValue(
+    recordList,
+    key,
+    value
 )
-    --[[
-    这个函数的目的是查找所有 key, value pair 符合条件的 choiceData 的列表.
-
-    类似于 ``SELECT ID FROM table WHERE talbe.choiceDataKey = choiceDataValue``.
-
-    :type choiceDataMapper: table
-    :param choiceDataMapper: 一个 {id: choiceData} 的字典, 其中 ID 是整数.
-    :type choiceDataKey: string
-    :param choiceDataKey: choiceData 中的 key
-    :type choiceDataKey: any
-    :param choiceDataValue: choiceData 中的 value
-
-    :return: 符合条件的所有 choiceData 的列表.
-    --]]
-    print("    ----- Start: CpiMultiVendor.FindAllByKeyValue(...) ------") -- for debug only
-    print(string.format("      choiceDataMapper = %s", choiceDataMapper)) -- for debug only
-    print(string.format("      choiceDataKey = %s", choiceDataKey)) -- for debug only
-    print(string.format("      choiceDataValue = %s", choiceDataValue)) -- for debug only
-    local choiceDataList = {}
+    --print("----- Start: record_lookup_utils.FindAllByKeyValue(...) ------") -- for debug only
+    --print(string.format("  recordList = %s", recordMapping)) -- for debug only
+    --print(string.format("  key = %s", key)) -- for debug only
+    --print(string.format("  value = %s", value)) -- for debug only
+    local filteredRecordList = {}
     -- 注: 这里必须用 ipairs, 确保顺序和定义的顺序一致
-    for choiceDataId, choiceData in ipairs(choiceDataMapper) do
-        if choiceDataKey then
-            if choiceData[choiceDataKey] == choiceDataValue then
-                table.insert(choiceDataList, choiceData)
-            end
-        else
-            if choiceData == choiceDataValue then
-                table.insert(choiceDataList, choiceData)
-            end
+    for _, record in ipairs(recordList) do
+        if record[key] == value then
+            table.insert(filteredRecordList, record)
         end
     end
-    print("    ----- End: CpiMultiVendor.FindAllByKeyValue(...) ------") -- for debug only
-    return choiceDataList
+    --print("----- End: record_lookup_utils.FindAllByKeyValue(...) ------") -- for debug only
+    return filteredRecordList
 end
 
 return record_lookup_utils
